@@ -1,11 +1,14 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { PageHeader, RiskBadge } from "@/components/DashboardComponents";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import ChildDetailsModal from "@/components/ChildDetailsModal";
 
 interface ResultRecord {
   id: number;
-  child: { name: string; dob: string };
+  child: { id: number; name: string; dob: string };
   date: string;
   prediction?: { riskLevel: "low" | "moderate" | "high"; riskScore: number };
   status: string;
@@ -16,6 +19,8 @@ export default function CHWResults() {
   const { token, user } = useAuth();
   const [results, setResults] = useState<ResultRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
+  const [selectedChildName, setSelectedChildName] = useState<string>("");
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
@@ -62,7 +67,7 @@ export default function CHWResults() {
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
-                {["Child", "Age", "Date", "Risk Level", "Score", "Review Status"].map((h) => (
+                {["Child", "Age", "Date", "Risk Level", "Score", "Review Status", "Actions"].map((h) => (
                   <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
                 ))}
               </tr>
@@ -70,13 +75,13 @@ export default function CHWResults() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     Loading prediction results…
                   </td>
                 </tr>
               ) : results.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     No prediction results found.
                   </td>
                 </tr>
@@ -111,6 +116,19 @@ export default function CHWResults() {
                         {r.status}
                       </span>
                     </td>
+                    <td className="p-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedChildId(r.child.id);
+                          setSelectedChildName(r.child.name);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Details
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -118,6 +136,18 @@ export default function CHWResults() {
           </table>
         </div>
       </div>
+      {selectedChildId && token && (
+        <ChildDetailsModal
+          token={token}
+          apiUrl={API_URL}
+          childId={selectedChildId}
+          childName={selectedChildName}
+          onClose={() => {
+            setSelectedChildId(null);
+            setSelectedChildName("");
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }

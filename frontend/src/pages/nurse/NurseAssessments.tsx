@@ -4,9 +4,11 @@ import { RiskBadge } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import ChildDetailsModal from "@/components/ChildDetailsModal";
 
 interface AssessmentRecord {
   id: number;
@@ -16,6 +18,7 @@ interface AssessmentRecord {
   muac: number;
   status: string;
   child: {
+    id: number;
     name: string;
     sector?: string;
     cell?: string;
@@ -35,6 +38,8 @@ export default function NurseAssessments() {
   const [sector, setSector] = useState("");
   const [cell, setCell] = useState("");
   const [village, setVillage] = useState("");
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
+  const [selectedChildName, setSelectedChildName] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
@@ -203,7 +208,18 @@ export default function NurseAssessments() {
                       <span className={`text-sm font-medium ${a.status === 'REVIEWED' ? 'text-success' : 'text-warning'}`}>{a.status}</span>
                     </td>
                     <td className="p-4">
-                      {a.status === 'PENDING' && <Button size="sm">Review</Button>}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedChildId(a.child.id);
+                          setSelectedChildName(a.child.name);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Details
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -211,6 +227,20 @@ export default function NurseAssessments() {
             </tbody>
           </table>
         </div>
+
+        {/* Child Details Modal */}
+        {selectedChildId !== null && (
+          <ChildDetailsModal
+            childId={selectedChildId}
+            childName={selectedChildName}
+            onClose={() => {
+              setSelectedChildId(null);
+              setSelectedChildName("");
+            }}
+            token={token || ""}
+            apiUrl={API_URL}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
