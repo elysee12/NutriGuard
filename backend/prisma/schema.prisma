@@ -1,0 +1,154 @@
+
+generator client {
+  provider = "prisma-client-js"
+  // Leave output default to ensure @prisma/client exports all generated enums and models.
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CHW
+  NURSE
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id              Int           @id @default(autoincrement())
+  name            String
+  email           String        @unique
+  password        String
+  role            UserRole
+  status          UserStatus    @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  healthCenter    HealthCenter? @relation(fields: [healthCenterId], references: [id])
+  healthCenterId  Int?
+  assessments     Assessment[]
+  logs            SystemLog[]
+  children        Child[]       @relation("CHWChildren")
+  district        String?
+  sector          String?
+  cell            String?
+  village         String?
+}
+
+model HealthCenter {
+  id              Int           @id @default(autoincrement())
+  name            String        @unique
+  location        String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  users           User[]
+  children        Child[]
+  reports         Report[]
+}
+
+model Child {
+  id              Int           @id @default(autoincrement())
+  name            String
+  dob             DateTime
+  gender          String
+  motherName      String
+  district        String
+  sector          String
+  cell            String
+  village         String
+  registeredAt    DateTime      @default(now())
+  chw             User          @relation("CHWChildren", fields: [chwId], references: [id])
+  chwId           Int
+  healthCenter    HealthCenter  @relation(fields: [healthCenterId], references: [id])
+  healthCenterId  Int
+  assessments     Assessment[]
+}
+
+enum RiskLevel {
+  low
+  moderate
+  high
+}
+
+enum AssessmentStatus {
+  PENDING
+  REVIEWED
+}
+
+model Assessment {
+  id                      Int               @id @default(autoincrement())
+  child                   Child             @relation(fields: [childId], references: [id])
+  childId                 Int
+  chw                     User              @relation(fields: [chwId], references: [id])
+  chwId                   Int
+  date                    DateTime          @default(now())
+  height                  Float
+  weight                  Float
+  muac                    Float
+  motherEducation         String
+  caregiverOccupation     String
+  hasBothParents          Boolean
+  hasRecentIllness        Boolean
+  hasMinimumMealFrequency Boolean
+  hasExclusiveBF          Boolean
+  hasVUP                  Boolean
+  hasHouseholdConflict    Boolean
+  hasSafeWater            Boolean
+  hasHandwashingFacility  Boolean
+  hasToilet               Boolean
+  prediction              Prediction?
+  status                  AssessmentStatus  @default(PENDING)
+  reviewedBy              String?
+  reviewedAt              DateTime?
+}
+
+model Prediction {
+  id              Int           @id @default(autoincrement())
+  assessment      Assessment    @relation(fields: [assessmentId], references: [id])
+  assessmentId    Int           @unique
+  result          String
+  riskScore       Float
+  riskLevel       RiskLevel
+  recommendation  String
+  createdAt       DateTime      @default(now())
+}
+
+enum ReportType {
+  Monthly
+  Quarterly
+  Regional
+}
+
+model Report {
+  id              Int           @id @default(autoincrement())
+  title           String
+  type            ReportType
+  date            DateTime
+  status          String
+  healthCenter    HealthCenter  @relation(fields: [healthCenterId], references: [id])
+  healthCenterId  Int
+  createdAt       DateTime      @default(now())
+}
+
+model SystemLog {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  action    String
+  time      DateTime @default(now())
+  role      UserRole
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otp       String
+  expiresAt DateTime
+}
