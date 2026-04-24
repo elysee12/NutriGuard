@@ -40,6 +40,7 @@ export default function NurseAssessments() {
   const [village, setVillage] = useState("");
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [selectedChildName, setSelectedChildName] = useState("");
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null);
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
@@ -214,6 +215,7 @@ export default function NurseAssessments() {
                         onClick={() => {
                           setSelectedChildId(a.child.id);
                           setSelectedChildName(a.child.name);
+                          setSelectedAssessmentId(a.id);
                         }}
                         className="flex items-center gap-1"
                       >
@@ -231,11 +233,14 @@ export default function NurseAssessments() {
         {/* Child Details Modal */}
         {selectedChildId !== null && (
           <ChildDetailsModal
+            key={`${selectedChildId}-${selectedAssessmentId}`}
             childId={selectedChildId}
             childName={selectedChildName}
+            assessmentId={selectedAssessmentId}
             onClose={() => {
               setSelectedChildId(null);
               setSelectedChildName("");
+              setSelectedAssessmentId(null);
             }}
             token={token || ""}
             apiUrl={API_URL}

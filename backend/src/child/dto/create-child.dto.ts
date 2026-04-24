@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateChildDto {
   @IsString()
@@ -32,4 +32,8 @@ export class CreateChildDto {
   @IsString()
   @IsNotEmpty()
   village: string;
+
+  @IsNumber()
+  @IsOptional()
+  chwId?: number;
 }

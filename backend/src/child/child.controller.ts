@@ -10,7 +10,7 @@ export class ChildController {
 
   @Post()
   create(@Body() createChildDto: CreateChildDto, @Req() req) {
-    return this.childService.create(createChildDto, req.user.userId);
+    return this.childService.create(createChildDto, req.user.userId, req.user.role);
   }
 
   @Get()

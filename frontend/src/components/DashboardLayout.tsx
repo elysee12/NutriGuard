@@ -1,13 +1,14 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import logo from "@/assets/logo.jpg";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   Heart, LayoutDashboard, Users, Baby, ClipboardList,
   FileText, Settings, LogOut, Building2, BarChart3,
-  UserCheck, Activity, ChevronLeft, ChevronRight,
+  UserCheck, Activity, ChevronLeft, ChevronRight, User,
 } from "lucide-react";
-import { useState } from "react";
+import ProfileUpdateModal from "./ProfileUpdateModal";
+import Footer from "./Footer";
 
 interface NavItem {
   label: string;
@@ -26,8 +27,9 @@ const navByRole: Record<UserRole, NavItem[]> = {
   ],
   NURSE: [
     { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: "/nurse" },
-    { label: "CHW Monitoring", icon: <Users className="h-5 w-5" />, path: "/nurse/chw" },
+    { label: "Register Child", icon: <Baby className="h-5 w-5" />, path: "/nurse/register-child" },
     { label: "Assessments", icon: <ClipboardList className="h-5 w-5" />, path: "/nurse/assessments" },
+    { label: "CHW Monitoring", icon: <Users className="h-5 w-5" />, path: "/nurse/chw" },
     { label: "Reports", icon: <FileText className="h-5 w-5" />, path: "/nurse/reports" },
   ],
   CHW: [
@@ -43,6 +45,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   if (!user) return null;
   const items = navByRole[user.role] || [];
@@ -94,11 +97,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Bottom */}
         <div className="p-3 border-t border-sidebar-border space-y-2">
           {!collapsed && (
-            <div className="px-3 py-2 rounded-lg bg-sidebar-accent">
-              <p className="text-xs text-sidebar-foreground/60">Logged in as</p>
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{user.name}</p>
-              <p className="text-xs text-sidebar-primary capitalize">{user.role === "CHW" ? "CHW" : user.role.toLowerCase()}</p>
-            </div>
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 hover:from-emerald-500/20 hover:to-emerald-600/20 border border-emerald-200 transition-all duration-200"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-white">
+                  <User className="h-4 w-4" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-xs text-gray-500">Logged in as</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate">{user.name}</p>
+                </div>
+              </div>
+              <p className="text-xs text-emerald-600 font-medium">Edit Profile</p>
+            </button>
+          )}
+          {collapsed && (
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="w-full p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors flex justify-center"
+              title="Edit Profile"
+            >
+              <User className="h-5 w-5" />
+            </button>
           )}
           <button
             onClick={handleLogout}
@@ -120,8 +142,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <main className="flex-1 overflow-y-auto bg-background">
-        {children}
+        <div className="flex flex-col min-h-full">
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
+        </div>
       </main>
+
+      {/* Profile Update Modal */}
+      {showProfileModal && (
+        <ProfileUpdateModal onClose={() => setShowProfileModal(false)} />
+      )}
     </div>
   );
 }

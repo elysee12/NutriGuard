@@ -21,6 +21,7 @@ export default function CHWResults() {
   const [loading, setLoading] = useState(true);
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [selectedChildName, setSelectedChildName] = useState<string>("");
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null);
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
@@ -123,6 +124,7 @@ export default function CHWResults() {
                         onClick={() => {
                           setSelectedChildId(r.child.id);
                           setSelectedChildName(r.child.name);
+                          setSelectedAssessmentId(r.id);
                         }}
                       >
                         <Eye className="w-4 h-4 mr-2" />
@@ -138,13 +140,16 @@ export default function CHWResults() {
       </div>
       {selectedChildId && token && (
         <ChildDetailsModal
+          key={`${selectedChildId}-${selectedAssessmentId}`}
           token={token}
           apiUrl={API_URL}
           childId={selectedChildId}
           childName={selectedChildName}
+          assessmentId={selectedAssessmentId}
           onClose={() => {
             setSelectedChildId(null);
             setSelectedChildName("");
+            setSelectedAssessmentId(null);
           }}
         />
       )}

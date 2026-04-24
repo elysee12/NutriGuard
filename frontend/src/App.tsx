@@ -13,6 +13,7 @@ import RegisterChild from "@/pages/chw/RegisterChild";
 import CHWAssessments from "@/pages/chw/CHWAssessments";
 import CHWResults from "@/pages/chw/CHWResults";
 import NurseDashboard from "@/pages/nurse/NurseDashboard";
+import NurseRegisterChild from "@/pages/nurse/NurseRegisterChild";
 import NurseAssessments from "@/pages/nurse/NurseAssessments";
 import NurseAssessmentView from "@/pages/nurse/NurseAssessmentView";
 import NurseCHWMonitoring from "@/pages/nurse/NurseCHWMonitoring";
@@ -24,6 +25,7 @@ import AdminStats from "@/pages/admin/AdminStats";
 import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
+import AuthLayout from "@/components/AuthLayout";
 
 const queryClient = new QueryClient();
 
@@ -33,16 +35,20 @@ function AppRoutes() {
   // Only show authenticated routes if both user and token exist
   if (!isAuthenticated || !user || !token) {
     return (
-      <Routes>
-        <Route path="/forgot" element={<ForgotPasswordPage />} />
-        <Route path="/reset" element={<ResetPasswordPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="*" element={<LoginPage />} />
-      </Routes>
+      <AuthLayout>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot" element={<ForgotPasswordPage />} />
+          <Route path="/reset" element={<ResetPasswordPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthLayout>
     );
   }
 
-  const homePath = user?.role === "admin" ? "/admin" : user?.role === "nurse" ? "/nurse" : "/chw";
+  const homePath = user?.role === "ADMIN" ? "/admin" : user?.role === "NURSE" ? "/nurse" : "/chw";
 
   return (
     <Routes>
@@ -50,12 +56,11 @@ function AppRoutes() {
       {/* CHW */}
       <Route path="/chw" element={<CHWDashboard />} />
       <Route path="/chw/register" element={<RegisterChild />} />
-      {/* nurse-specific routes */}
-      <Route path="/nurse/register-child" element={<RegisterChild />} />
       <Route path="/chw/assessments" element={<CHWAssessments />} />
       <Route path="/chw/results" element={<CHWResults />} />
       {/* Nurse */}
       <Route path="/nurse" element={<NurseDashboard />} />
+      <Route path="/nurse/register-child" element={<NurseRegisterChild />} />
       <Route path="/nurse/assessments" element={<NurseAssessments />} />
       <Route path="/nurse/assessments/:id" element={<NurseAssessmentView />} />
       <Route path="/nurse/chw" element={<NurseCHWMonitoring />} />
@@ -67,7 +72,7 @@ function AppRoutes() {
       <Route path="/admin/stats" element={<AdminStats />} />
       <Route path="/admin/logs" element={<AdminLogs />} />
       <Route path="/admin/settings" element={<AdminSettings />} />
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<AuthLayout><NotFound /></AuthLayout>} />
     </Routes>
   );
 }

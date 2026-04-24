@@ -6,22 +6,53 @@ import { CreateChildDto } from './dto/create-child.dto';
 export class ChildService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createChildDto: CreateChildDto, chwId: number) {
-    const chw = await this.prisma.user.findUnique({
-      where: { id: chwId },
-      include: { healthCenter: true },
-    });
+  async create(createChildDto: CreateChildDto, userId: number, userRole: string) {
+    let chwId: number;
+    let healthCenterId: number;
 
-    if (!chw || !chw.healthCenterId) {
-      throw new ForbiddenException('User is not assigned to a health center');
+    // If user is CHW, use their own ID
+    if (userRole === 'CHW') {
+      chwId = userId;
+      const chw = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: { healthCenter: true },
+      });
+      if (!chw || !chw.healthCenterId) {
+        throw new ForbiddenException('User is not assigned to a health center');
+      }
+      healthCenterId = chw.healthCenterId;
+    } 
+    // If user is NURSE or ADMIN, use the provided chwId from form
+    else if (userRole === 'NURSE' || userRole === 'ADMIN') {
+      if (!createChildDto.chwId) {
+        throw new ForbiddenException('CHW assignment is required when registered by Nurse or Admin');
+      }
+
+      const chw = await this.prisma.user.findUnique({
+        where: { id: createChildDto.chwId },
+        include: { healthCenter: true },
+      });
+
+      if (!chw || chw.role !== 'CHW') {
+        throw new ForbiddenException('Invalid CHW selected');
+      }
+
+      if (!chw.healthCenterId) {
+        throw new ForbiddenException('CHW is not assigned to a health center');
+      }
+
+      chwId = createChildDto.chwId;
+      healthCenterId = chw.healthCenterId;
+    } else {
+      throw new ForbiddenException('Unauthorized to register child');
     }
 
     return this.prisma.child.create({
       data: {
         ...createChildDto,
         dob: new Date(createChildDto.dob),
-        chwId: chw.id,
-        healthCenterId: chw.healthCenterId,
+        chwId,
+        healthCenterId,
       },
     });
   }

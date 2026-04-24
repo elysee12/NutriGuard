@@ -49,6 +49,7 @@ interface ChildProfileData {
 interface ChildDetailsModalProps {
   childId: number;
   childName: string;
+  assessmentId?: number | null;
   onClose: () => void;
   token: string;
   apiUrl: string;
@@ -57,6 +58,7 @@ interface ChildDetailsModalProps {
 export default function ChildDetailsModal({
   childId,
   childName,
+  assessmentId,
   onClose,
   token,
   apiUrl,
@@ -198,7 +200,7 @@ export default function ChildDetailsModal({
               {/* Assessment History Section */}
               <div>
                 <h3 className="font-display text-lg font-semibold text-foreground mb-4">
-                  Assessment History ({child.assessments.length})
+                  {assessmentId ? "Assessment Details" : `Assessment History (${child.assessments.length})`}
                 </h3>
 
                 {child.assessments.length === 0 ? (
@@ -207,7 +209,9 @@ export default function ChildDetailsModal({
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-[70vh] overflow-y-auto">
-                    {child.assessments.map((assessment) => (
+                    {child.assessments
+                      .filter((a) => !assessmentId || a.id === assessmentId)
+                      .map((assessment) => (
                       <div
                         key={assessment.id}
                         className="bg-card border rounded-lg p-4 hover:shadow-md transition-shadow space-y-4"
