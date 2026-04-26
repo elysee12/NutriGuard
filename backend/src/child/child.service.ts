@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChildDto } from './dto/create-child.dto';
+import { UpdateChildDto } from './dto/update-child.dto';
 
 @Injectable()
 export class ChildService {
@@ -85,5 +86,77 @@ export class ChildService {
     });
     if (!child) throw new NotFoundException('Child not found');
     return child;
+  }
+
+  async update(id: number, updateChildDto: UpdateChildDto, user: any) {
+    const child = await this.prisma.child.findUnique({
+      where: { id },
+    });
+
+    if (!child) throw new NotFoundException('Child not found');
+
+    // Authorization check
+    if (user.role === 'CHW' && child.chwId !== user.userId) {
+      throw new ForbiddenException('You can only update children assigned to you');
+    }
+
+    if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || nurse.healthCenterId !== child.healthCenterId) {
+        throw new ForbiddenException('You can only update children in your health center');
+      }
+    }
+
+    const updateData: any = { ...updateChildDto };
+    if (updateChildDto.dob) {
+      updateData.dob = new Date(updateChildDto.dob);
+    }
+
+    return this.prisma.child.update({
+      where: { id },
+      data: updateData,
+    });
+  }
+
+  async remove(id: number, user: any) {
+    const child = await this.prisma.child.findUnique({
+      where: { id },
+    });
+
+    if (!child) throw new NotFoundException('Child not found');
+
+    // Authorization check
+    if (user.role === 'CHW' && child.chwId !== user.userId) {
+      throw new ForbiddenException('You can only delete children assigned to you');
+    }
+
+    if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || nurse.healthCenterId !== child.healthCenterId) {
+        throw new ForbiddenException('You can only delete children in your health center');
+      }
+    }
+
+    // Use a transaction to delete related records before deleting the child
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Delete all predictions related to assessments of this child
+      await tx.prediction.deleteMany({
+        where: {
+          assessment: {
+            childId: id
+          }
+        }
+      });
+
+      // 2. Delete all assessments related to this child
+      await tx.assessment.deleteMany({
+        where: { childId: id },
+      });
+
+      // 3. Now delete the child
+      return tx.child.delete({
+        where: { id },
+      });
+    });
   }
 }

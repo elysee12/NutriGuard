@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PasswordResetModule } from './password-reset/password-reset.module';
 import { AuthModule } from './auth/auth.module';
 import { StatsModule } from './stats/stats.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { StatsModule } from './stats/stats.module';
     SystemLogModule,
     PasswordResetModule,
     StatsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

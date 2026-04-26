@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, AlertCircle, CheckCircle2, Pencil, Trash2, X } from "lucide-react";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { API_URL } from "@/lib/api";
 
 interface CHWRecord {
@@ -62,6 +64,10 @@ export default function NurseRegisterChild() {
   const [chws, setChws] = useState<CHWRecord[]>([]);
   const [searchingChws, setSearchingChws] = useState(false);
   const [selectedChw, setSelectedChw] = useState<CHWRecord | null>(null);
+  const [editingChild, setEditingChild] = useState<ChildRecord | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [childToDelete, setChildToDelete] = useState<number | null>(null);
 
   // Load registered children
   useEffect(() => {
@@ -96,6 +102,39 @@ export default function NurseRegisterChild() {
 
     loadChildren();
   }, [token, API_URL]);
+
+  const handleEdit = (child: ChildRecord) => {
+    setEditingChild(child);
+    setForm({
+      name: child.name,
+      dob: new Date(child.dob).toISOString().split('T')[0],
+      gender: child.gender,
+      motherName: child.motherName,
+      district: child.district,
+      sector: child.sector,
+      cell: child.cell,
+      village: child.village,
+      chwId: child.chw?.id || 0,
+    });
+    
+    if (child.chw) {
+      // Mock a CHW record for the selected state
+      setSelectedChw({
+        id: child.chw.id,
+        name: child.chw.name,
+        email: "",
+        district: child.district,
+        sector: child.sector,
+        cell: child.cell,
+        village: child.village,
+        healthCenter: { id: 0, name: "Assigned CHW" }
+      });
+    } else {
+      setSelectedChw(null);
+    }
+    
+    setIsEditDialogOpen(true);
+  };
 
   // Search for CHWs when village is entered
   const searchChws = async () => {
@@ -153,6 +192,53 @@ export default function NurseRegisterChild() {
     }));
   };
 
+  const confirmDelete = (id: number) => {
+    setChildToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!childToDelete) return;
+    try {
+      const response = await fetch(`${API_URL}/child/${childToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete child');
+      }
+
+      setChildren((prev) => prev.filter((c) => c.id !== childToDelete));
+      toast.success("Child record deleted successfully");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setChildToDelete(null);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingChild(null);
+    setIsEditDialogOpen(false);
+    setForm({
+      name: "",
+      dob: "",
+      gender: "M",
+      motherName: "",
+      district: "",
+      sector: "",
+      cell: "",
+      village: "",
+      chwId: 0,
+    });
+    setSelectedChw(null);
+    setChws([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -177,8 +263,11 @@ export default function NurseRegisterChild() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/child`, {
-        method: 'POST',
+      const url = editingChild ? `${API_URL}/child/${editingChild.id}` : `${API_URL}/child`;
+      const method = editingChild ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -199,11 +288,18 @@ export default function NurseRegisterChild() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to register child');
+        throw new Error(data.message || `Failed to ${editingChild ? 'update' : 'register'} child`);
       }
 
-      setChildren((prev) => [data, ...prev]);
-      toast.success("Child registered successfully!");
+      if (editingChild) {
+        setChildren((prev) => prev.map((c) => (c.id === editingChild.id ? data : c)));
+        toast.success("Child record updated successfully!");
+        setEditingChild(null);
+        setIsEditDialogOpen(false);
+      } else {
+        setChildren((prev) => [data, ...prev]);
+        toast.success("Child registered successfully!");
+      }
 
       // Reset form
       setForm((prev) => ({
@@ -437,7 +533,7 @@ export default function NurseRegisterChild() {
                 <thead>
                   <tr className="border-b bg-muted/50">
                     {[
-                      "Child", "DOB", "Gender", "Village", "CHW Provider", "Registered"
+                      "Child", "DOB", "Gender", "Village", "CHW Provider", "Registered", "Actions"
                     ].map((header) => (
                       <th key={header} className="p-3 text-sm font-medium text-muted-foreground">{header}</th>
                     ))}
@@ -452,6 +548,26 @@ export default function NurseRegisterChild() {
                       <td className="p-3 text-sm">{child.village}</td>
                       <td className="p-3 text-sm">{child.chw?.name || "Unassigned"}</td>
                       <td className="p-3 text-sm">{new Date(child.registeredAt).toLocaleDateString()}</td>
+                      <td className="p-3 text-sm">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleEdit(child)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => confirmDelete(child.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -460,6 +576,127 @@ export default function NurseRegisterChild() {
           )}
         </div>
       </div>
+
+      {/* Edit Child Modal */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Child Record</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Info */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Child Information</h3>
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>DOB</Label>
+                    <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={form.gender}
+                      onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                    >
+                      <option value="M">Male</option>
+                      <option value="F">Female</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Mother Name</Label>
+                  <Input value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} required />
+                </div>
+              </div>
+
+              {/* Right Column: Location & CHW */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Location & Assignment</h3>
+                <div className="space-y-2">
+                  <Label>District</Label>
+                  <Input value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Sector</Label>
+                    <Input value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cell</Label>
+                    <Input value={form.cell} onChange={(e) => setForm({ ...form, cell: e.target.value })} required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Village</Label>
+                  <div className="flex gap-2">
+                    <Input value={form.village} onChange={(e) => setForm({ ...form, village: e.target.value })} required className="flex-1" />
+                    <Button type="button" variant="outline" size="icon" onClick={searchChws} disabled={searchingChws}>
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CHW Selection in Modal */}
+            <div className="bg-muted/30 p-4 rounded-lg border">
+              <h3 className="font-semibold text-sm mb-3">CHW Assignment</h3>
+              {selectedChw ? (
+                <div className="flex items-center justify-between bg-white p-3 rounded border border-emerald-200">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    <div>
+                      <p className="text-sm font-medium">{selectedChw.name}</p>
+                      <p className="text-xs text-muted-foreground">{selectedChw.healthCenter.name}</p>
+                    </div>
+                  </div>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setSelectedChw(null); setForm({ ...form, chwId: 0 }); }}>
+                    Change
+                  </Button>
+                </div>
+              ) : chws.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-1">
+                  {chws.map(chw => (
+                    <button
+                      key={chw.id}
+                      type="button"
+                      onClick={() => handleSelectChw(chw)}
+                      className="text-left p-2 text-xs border rounded hover:bg-emerald-50 hover:border-emerald-300 transition-colors"
+                    >
+                      <p className="font-semibold">{chw.name}</p>
+                      <p className="text-muted-foreground truncate">{chw.email}</p>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-center text-muted-foreground py-2">
+                  {searchingChws ? "Searching..." : "Search village to see available CHWs"}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" onClick={cancelEdit}>Cancel</Button>
+              </DialogClose>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">Update Record</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <DeleteConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        message="Are you sure you want to delete this child record?"
+      />
     </DashboardLayout>
   );
 }

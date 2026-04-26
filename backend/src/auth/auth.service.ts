@@ -5,16 +5,18 @@ import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserRole, UserStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const { email, password, name, role, healthCenterName, district, sector, cell, village } = registerDto;
+    const { email, password, name, role, healthCenterName, healthCenterId: dtoHealthCenterId, district, sector, cell, village } = registerDto;
 
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -23,8 +25,10 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let healthCenterId: number | null = null;
-    if (healthCenterName) {
+    let healthCenterId: number | null = dtoHealthCenterId || null;
+    
+    // Fallback to name lookup if ID not provided
+    if (!healthCenterId && healthCenterName) {
       const healthCenter = await this.prisma.healthCenter.findUnique({
         where: { name: healthCenterName },
       });
@@ -47,6 +51,9 @@ export class AuthService {
         status: UserStatus.PENDING,
       },
     });
+
+    // Send confirmation email
+    await this.mailService.sendRegistrationRequestEmail(email, name);
 
     return {
       message: 'Registration request submitted. An administrator will review your account.',

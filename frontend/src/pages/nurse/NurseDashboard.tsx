@@ -51,6 +51,11 @@ export default function NurseDashboard() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-emerald-800">Welcome, {user?.name}</h2>
+          <p className="text-muted-foreground">We're glad to have you back.</p>
+        </div>
+
         <PageHeader
           title="Nurse Dashboard"
           description={center ? `${center} — Monitoring & Review` : "Monitoring & Review"}

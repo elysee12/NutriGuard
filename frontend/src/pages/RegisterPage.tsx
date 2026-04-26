@@ -16,60 +16,96 @@ const roles: { value: UserRole; label: string; icon: React.ReactNode; desc: stri
 ];
 
 // health centers in Kicukiro district (fallback)
-const staticHealthCenters = [
-  "Kicukiro Health Center",
-  "Gikondo Health Center",
-  "Nyarugunga Health Center",
-  "Kicukiro District Hospital",
-  "Nyarugunga Health Post",
-];
+const chwLocationConfig = {
+  "Gahanga": {
+    cells: ["Gahanga", "Kagasa", "Murambi"],
+    villages: {
+      "Gahanga": ["Gahanga", "Gatare", "Gatovu", "Karinini", "Rwinanka", "Ubumwe"],
+      "Kagasa": ["Kabeza", "Kabidandi", "Kagasa", "Kagera", "Kamanu", "Muhororo", "Rugarama"],
+      "Murambi": ["Butereri", "Butirabura", "Kabatwa", "Murambi", "Nunga", "Rurambo"]
+    }
+  },
+  "Gatenga": {
+    cells: ["Gatenga", "Karambo", "Nyanza"],
+    villages: {
+      "Gatenga": ["Gatenga I", "Gatenga II", "Kigina", "Marembo", "Murambi", "Nyabisindu", "Ruherezo"],
+      "Karambo": ["Gatare", "Icyerekezo", "Karambo", "Rinda", "Rusizi"],
+      "Nyanza": ["Akabeneza", "Akamatamu", "Gashyekero", "Icyenyerere", "Kagunga", "Muremera", "Nyanza", "Rebero"]
+    }
+  },
+  "Gikondo": {
+    cells: ["Kagunga", "Kanserege", "Mburabuturo"],
+    villages: {
+      "Kagunga": ["Gikondo", "Kagunga I", "Kagunga II", "Kanserege", "Katabaro", "Marembo", "Ruganwa I", "Ruganwa II"],
+      "Kanserege": ["Kabutare", "Kanserege", "Kigarama", "Rugano"],
+      "Mburabuturo": ["Gatare", "Mburabuturo", "Rebero", "Taba"]
+    }
+  },
+  "Kagarama": {
+    cells: ["Kagarama", "Muyange", "Rukatsa"],
+    villages: {
+      "Kagarama": ["Kagarama", "Kanserege", "Kigabiro"],
+      "Muyange": ["Gako", "Icyuzuzo", "Kabeza", "Mayange", "Muyange"],
+      "Rukatsa": ["Bugifi", "Gashyushya", "Kabuga", "Rukatsa"]
+    }
+  },
+  "Kanombe": {
+    cells: ["Busanza", "Kabeza", "Karama", "Rubirizi"],
+    villages: {
+      "Busanza": ["Gashyushya", "Kabugondo", "Karama", "Marembo", "Nyandungu", "Rinda"],
+      "Kabeza": ["Kabeza", "Karisimbi", "Uruhuha"],
+      "Karama": ["Agasaro", "Gatarama", "Icyatwa", "Karama", "Ubutunzi"],
+      "Rubirizi": ["Giporoso I", "Giporoso II", "Itaba", "Kanserege", "Rubirizi"]
+    }
+  },
+  "Kicukiro": {
+    cells: ["Kicukiro", "Ngoma"],
+    villages: {
+      "Kicukiro": ["Icyizere", "Kicukiro", "Rukiri"],
+      "Ngoma": ["Gatare", "Ihuriro", "Isangano", "Ngoma"]
+    }
+  },
+  "Kigarama": {
+    cells: ["Bwerankori", "Karugira", "Kigarama", "Nyarurama", "Rwampara"],
+    villages: {
+      "Bwerankori": ["Bwerankori I", "Bwerankori II", "Icyerekezo", "Imena", "Inshuti", "Rugunga"],
+      "Karugira": ["Isano", "Ituze", "Karugira", "Kigina"],
+      "Kigarama": ["Icyerekezo", "Kigarama", "Rurembo"],
+      "Nyarurama": ["Gatovu", "Kigali", "Marembo", "Nyarurama", "Ruganwa"],
+      "Rwampara": ["Gatare", "Ihuriro", "Ingenzi", "Rwampara"]
+    }
+  },
+  "Masaka": {
+    cells: ["Cyiteranyi", "Gako", "Gitaraga", "Masaka", "Rweru"],
+    villages: {
+      "Cyiteranyi": ["Cyiteranyi", "Kageyo", "Masezero", "Nyagacaca"],
+      "Gako": ["Agatare", "Gako", "Gatare", "Karushya", "Kayenziraba", "Kigarama", "Murambi"],
+      "Gitaraga": ["Gitaraga", "Kigufi", "Mubuga", "Rukombe"],
+      "Masaka": ["Gisenga", "Icyenyerere", "Kabeza", "Kagaso", "Mbabe", "Umutara"],
+      "Rweru": ["Kacyiru", "Kanyinya", "Rweru"]
+    }
+  },
+  "Niboye": {
+    cells: ["Gatare", "Niboye", "Nyakabanda"],
+    villages: {
+      "Gatare": ["Gatare I", "Gatare II", "Ihuriro"],
+      "Niboye": ["Gasharu", "Kigarama", "Niboye", "Taba"],
+      "Nyakabanda": ["Gasave", "Kimenyi", "Nyakabanda"]
+    }
+  },
+  "Nyarugunga": {
+    cells: ["Kamashashi", "Nonko", "Rwimbogo"],
+    villages: {
+      "Kamashashi": ["Kamashashi", "Katabaro", "Rwabutazi", "Umutara"],
+      "Nonko": ["Kajevuba", "Nonko"],
+      "Rwimbogo": ["Bisambu", "Isangano", "Rwimbogo"]
+    }
+  }
+};
+
+const staticHealthCenters = Object.keys(chwLocationConfig);
 
 const district = "Kicukiro";
-
-const chwLocationConfig: Record<string, { sectors: string[]; cells: Record<string, string[]>; villages: Record<string, string[]> }> = {
-  "Kicukiro Health Center": {
-    // Located in Niboye Sector
-    sectors: ["Niboye", "Kagarama"],
-    cells: {
-      Niboye: ["Niboye", "Gatare", "Nyakabanda"],
-      Kagarama: ["Kagarama", "Muyange"],
-    },
-    villages: {
-      Niboye: ["Taba", "Gasharu", "Kigarama"],
-      Gatare: ["Gatare I", "Gatare II"],
-      Kagarama: ["Kanserege", "Kabeza"],
-      Muyange: ["Mayange", "Gako"],
-    },
-  },
-  "Gikondo Health Center": {
-    // Primarily serves Gikondo Sector
-    sectors: ["Gikondo", "Gatenga"],
-    cells: {
-      Gikondo: ["Kagunga", "Kanserege", "Mburabuturo"],
-      Gatenga: ["Gatenga", "Karambo"],
-    },
-    villages: {
-      Kagunga: ["Kagunga I", "Kagunga II"],
-      Kanserege: ["Rugano", "Kanserege"],
-      Mburabuturo: ["Gatare", "Rebero"],
-      Gatenga: ["Gatenga I", "Nyabisindu"],
-    },
-  },
-  "Nyarugunga Health Center": {
-    // Specifically serves Nyarugunga and Kanombe areas
-    sectors: ["Nyarugunga", "Kanombe"],
-    cells: {
-      Nyarugunga: ["Kamashashi", "Nonko", "Rwimbogo"],
-      Kanombe: ["Busanza", "Rubirizi"],
-    },
-    villages: {
-      Kamashashi: ["Kamashashi", "Umutara"],
-      Nonko: ["Nonko", "Kajevuba"],
-      Busanza: ["Gashyushya", "Karama"],
-      Rubirizi: ["Rubirizi", "Kanserege"],
-    },
-  },
-};
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -80,8 +116,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("chw");
-  const [healthCenters, setHealthCenters] = useState<string[]>(staticHealthCenters);
-  const [healthCenter, setHealthCenter] = useState(staticHealthCenters[0]);
+  const [healthCenters, setHealthCenters] = useState<{id: number, name: string}[]>([]);
+  const [healthCenterId, setHealthCenterId] = useState<number | string>("");
   const [loadingCenters, setLoadingCenters] = useState(false);
   const [healthCenterError, setHealthCenterError] = useState<string | null>(null);
   const [sector, setSector] = useState("");
@@ -96,10 +132,11 @@ export default function RegisterPage() {
       return;
     }
 
-    const centerConfig = chwLocationConfig[healthCenter];
-    const firstSector = centerConfig?.sectors?.[0] || "";
-    setSector(firstSector);
-  }, [selectedRole, healthCenter]);
+    // Default to first sector if not set
+    if (!sector) {
+      setSector(Object.keys(chwLocationConfig)[0]);
+    }
+  }, [selectedRole]);
 
   useEffect(() => {
     const loadHealthCenters = async () => {
@@ -111,16 +148,16 @@ export default function RegisterPage() {
           throw new Error('Unable to load centers');
         }
         const data = await response.json();
-        const names = Array.isArray(data) ? data.map((item: any) => item.name).filter(Boolean) : [];
-        if (names.length > 0) {
-          setHealthCenters(names);
-          setHealthCenter((prev) => prev || names[0]);
+        if (Array.isArray(data) && data.length > 0) {
+          setHealthCenters(data);
+          // Auto-select first center if none selected
+          if (!healthCenterId) {
+            setHealthCenterId(data[0].id);
+          }
         }
       } catch (error) {
         console.error(error);
-        setHealthCenterError('Unable to load health centers. Using default list.');
-        setHealthCenters(staticHealthCenters);
-        setHealthCenter((prev) => prev || staticHealthCenters[0]);
+        setHealthCenterError('Unable to load health centers.');
       } finally {
         setLoadingCenters(false);
       }
@@ -129,27 +166,47 @@ export default function RegisterPage() {
     loadHealthCenters();
   }, []);
 
+  // For CHW, try to find a health center that matches the selected sector name
   useEffect(() => {
-    const centerConfig = chwLocationConfig[healthCenter];
-    if (!centerConfig || !sector) {
-      setCell("");
-      return;
+    if (selectedRole === "chw" && sector && healthCenters.length > 0) {
+      const matchingCenter = healthCenters.find(
+        hc => hc.name.toLowerCase().includes(sector.toLowerCase()) || 
+              sector.toLowerCase().includes(hc.name.toLowerCase())
+      );
+      if (matchingCenter) {
+        setHealthCenterId(matchingCenter.id);
+      }
     }
-    const firstCell = centerConfig.cells[sector]?.[0] || "";
-    setCell((prevCell) => {
-      const options = centerConfig.cells[sector] || [];
-      if (!prevCell || !options.includes(prevCell)) return firstCell;
-      return prevCell;
-    });
-  }, [healthCenter, sector]);
+  }, [selectedRole, sector, healthCenters]);
 
   useEffect(() => {
-    const centerConfig = chwLocationConfig[healthCenter];
-    const allowedVillages = (centerConfig?.villages?.[cell] || []);
-    if (cell && !allowedVillages.includes(village)) {
-      setVillage("");
+    if (selectedRole !== "chw" || !sector) {
+      return;
     }
-  }, [healthCenter, cell, village]);
+    const sectorConfig = chwLocationConfig[sector as keyof typeof chwLocationConfig];
+    if (!sectorConfig) return;
+
+    const firstCell = sectorConfig.cells[0] || "";
+    setCell((prevCell) => {
+      if (!prevCell || !sectorConfig.cells.includes(prevCell)) return firstCell;
+      return prevCell;
+    });
+  }, [selectedRole, sector]);
+
+  useEffect(() => {
+    if (selectedRole !== "chw" || !sector || !cell) {
+      return;
+    }
+    const sectorConfig = chwLocationConfig[sector as keyof typeof chwLocationConfig];
+    if (!sectorConfig) return;
+
+    const villages = sectorConfig.villages[cell as keyof typeof sectorConfig.villages] || [];
+    const firstVillage = villages[0] || "";
+    setVillage((prevVillage) => {
+      if (!prevVillage || !villages.includes(prevVillage)) return firstVillage;
+      return prevVillage;
+    });
+  }, [selectedRole, sector, cell]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +219,7 @@ export default function RegisterPage() {
           email,
           password,
           role: selectedRole.toUpperCase(),
-          healthCenterName: healthCenter,
+          healthCenterId: healthCenterId ? Number(healthCenterId) : null,
           district,
           sector,
           cell,
@@ -307,19 +364,19 @@ export default function RegisterPage() {
               ))}
             </div>
 
-            {(selectedRole === "nurse" || selectedRole === "chw") && (
+            {selectedRole === "nurse" && (
               <div className="space-y-2">
                 <Label htmlFor="healthCenter">Health Center</Label>
                 <select
                   id="healthCenter"
                   className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                  value={healthCenter}
-                  onChange={(e) => setHealthCenter(e.target.value)}
+                  value={healthCenterId}
+                  onChange={(e) => setHealthCenterId(e.target.value)}
                   required
                 >
                   {healthCenters.length > 0 ? (
                     healthCenters.map((hc) => (
-                      <option key={hc} value={hc}>{hc}</option>
+                      <option key={hc.id} value={hc.id}>{hc.name}</option>
                     ))
                   ) : (
                     <option value="">No health centers available</option>
@@ -347,7 +404,7 @@ export default function RegisterPage() {
                     onChange={(e) => setSector(e.target.value)}
                     required
                   >
-                    {(chwLocationConfig[healthCenter]?.sectors || []).map((s) => (
+                    {Object.keys(chwLocationConfig).map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
@@ -360,7 +417,7 @@ export default function RegisterPage() {
                     onChange={(e) => setCell(e.target.value)}
                     required
                   >
-                    {(chwLocationConfig[healthCenter]?.cells?.[sector] || []).map((c) => (
+                    {(chwLocationConfig[sector as keyof typeof chwLocationConfig]?.cells || []).map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -373,8 +430,7 @@ export default function RegisterPage() {
                     onChange={(e) => setVillage(e.target.value)}
                     required
                   >
-                    <option value="">Select village</option>
-                    {(chwLocationConfig[healthCenter]?.villages?.[cell] || []).map((v) => (
+                    {(chwLocationConfig[sector as keyof typeof chwLocationConfig]?.villages[cell as keyof any] || []).map((v: string) => (
                       <option key={v} value={v}>{v}</option>
                     ))}
                   </select>

@@ -105,9 +105,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-white">
                   <User className="h-4 w-4" />
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="text-xs text-gray-500">Logged in as</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate">{user.name}</p>
+                <div className="flex-1 text-left overflow-hidden">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-700/70">Logged in as</p>
+                  <p className="text-sm font-bold text-emerald-900 truncate drop-shadow-sm">{user.name}</p>
                 </div>
               </div>
               <p className="text-xs text-emerald-600 font-medium">Edit Profile</p>
