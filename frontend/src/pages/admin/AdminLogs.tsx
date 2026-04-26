@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { PageHeader } from "@/components/DashboardComponents";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface SystemLogEntry {
@@ -15,7 +16,6 @@ export default function AdminLogs() {
   const { token } = useAuth();
   const [logs, setLogs] = useState<SystemLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     if (!token) return;

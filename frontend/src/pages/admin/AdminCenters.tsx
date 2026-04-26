@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, Dialog
 import { Building2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface HealthCenter {
@@ -30,7 +31,6 @@ export default function AdminCenters() {
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   const fetchCenters = async () => {
     setLoading(true);

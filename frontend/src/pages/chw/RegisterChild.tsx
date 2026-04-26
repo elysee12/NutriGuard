@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 interface ChildRecord {
   id: number;
@@ -64,7 +65,7 @@ export default function RegisterChild() {
 
       setLoadingChildren(true);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/child`, {
+        const response = await fetch(`${API_URL}/child`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -90,7 +91,7 @@ export default function RegisterChild() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/child`, {
+      const response = await fetch(`${API_URL}/child`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

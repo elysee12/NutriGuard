@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface User {
@@ -21,7 +22,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [submittingUserId, setSubmittingUserId] = useState<number | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!token) return;

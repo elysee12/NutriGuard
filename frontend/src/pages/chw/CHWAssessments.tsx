@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 interface ChildRecord {
   id: number;
@@ -69,8 +70,6 @@ export default function CHWAssessments() {
     handwash: "Oya",
     toilet: "Oya",
   });
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const loadChildren = async () => {

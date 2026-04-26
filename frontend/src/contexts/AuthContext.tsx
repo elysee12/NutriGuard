@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/api";
 
 export type UserRole = "ADMIN" | "NURSE" | "CHW";
 
@@ -26,8 +27,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {

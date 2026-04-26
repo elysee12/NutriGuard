@@ -4,6 +4,7 @@ import { Users, Baby, AlertTriangle, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface PendingReview {
@@ -20,7 +21,6 @@ export default function NurseDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const center = user?.healthCenter || "";
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const fetchDashboardData = async () => {

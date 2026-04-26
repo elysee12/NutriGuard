@@ -5,6 +5,7 @@ import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
+import { API_URL } from "@/lib/api";
 
 interface ResultRecord {
   id: number;
@@ -22,7 +23,6 @@ export default function CHWResults() {
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [selectedChildName, setSelectedChildName] = useState<string>("");
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const loadResults = async () => {

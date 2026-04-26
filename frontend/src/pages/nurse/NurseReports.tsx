@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Download, Filter, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 interface AssessmentRecord {
   id: number;
@@ -42,8 +43,6 @@ export default function NurseReports() {
   const [sector, setSector] = useState("");
   const [cell, setCell] = useState("");
   const [village, setVillage] = useState("");
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   // Load assessments from backend
   useEffect(() => {

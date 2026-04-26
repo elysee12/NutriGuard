@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, Heart, Shield, Stethoscope, Users } from "lucide-react";
 import logo from "@/assets/logo.jpg";
+import { API_URL } from "@/lib/api";
 
 const roles: { value: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
   { value: "admin", label: "Admin", icon: <Shield className="h-5 w-5" />, desc: "System administrator" },
@@ -105,7 +106,7 @@ export default function RegisterPage() {
       setLoadingCenters(true);
       setHealthCenterError(null);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/health-center`);
+        const response = await fetch(`${API_URL}/health-center`);
         if (!response.ok) {
           throw new Error('Unable to load centers');
         }
@@ -153,7 +154,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/register`, {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

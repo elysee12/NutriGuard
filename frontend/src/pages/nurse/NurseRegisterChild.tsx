@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Search, AlertCircle, CheckCircle2 } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface CHWRecord {
   id: number;
@@ -61,8 +62,6 @@ export default function NurseRegisterChild() {
   const [chws, setChws] = useState<CHWRecord[]>([]);
   const [searchingChws, setSearchingChws] = useState(false);
   const [selectedChw, setSelectedChw] = useState<CHWRecord | null>(null);
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   // Load registered children
   useEffect(() => {

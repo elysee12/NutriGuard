@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
+import { API_URL } from "@/lib/api";
 
 interface AssessmentRecord {
   id: number;
@@ -41,7 +42,6 @@ export default function NurseAssessments() {
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [selectedChildName, setSelectedChildName] = useState("");
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const loadAssessments = async () => {

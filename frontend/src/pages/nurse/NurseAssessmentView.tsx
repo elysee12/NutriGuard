@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { PageHeader, RiskBadge } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,7 +25,6 @@ export default function NurseAssessmentView() {
   const navigate = useNavigate();
   const [assessment, setAssessment] = useState<AssessmentDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const fetchAssessment = async () => {

@@ -4,6 +4,7 @@ import { Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 interface UserRecord {
   id: number;
@@ -46,7 +47,7 @@ export default function NurseCHWMonitoring() {
   const [search, setSearch] = useState("");
   const [chws, setChws] = useState<CHWStats[]>([]);
   const [loading, setLoading] = useState(true);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const [selectedVillage, setSelectedVillage] = useState("");
 
   useEffect(() => {
     const loadCHWData = async () => {

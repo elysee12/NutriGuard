@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { PageHeader } from "@/components/DashboardComponents";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface DashboardStats {
@@ -15,7 +16,6 @@ export default function AdminStats() {
   const { token } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     if (!token) return;

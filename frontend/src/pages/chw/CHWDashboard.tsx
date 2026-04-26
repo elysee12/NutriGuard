@@ -4,6 +4,7 @@ import { Baby, ClipboardList, AlertTriangle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface Assessment {
@@ -21,7 +22,6 @@ export default function CHWDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [recentAssessments, setRecentAssessments] = useState<Assessment[]>([]);
   const center = user?.healthCenter || "";
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const fetchDashboardData = async () => {

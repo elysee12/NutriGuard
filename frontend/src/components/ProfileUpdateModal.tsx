@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 interface ProfileUpdateModalProps {
   onClose: () => void;
@@ -24,8 +25,6 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"basic" | "password">("basic");
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   const handleBasicUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
