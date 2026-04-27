@@ -287,58 +287,112 @@ export default function RegisterChild() {
           </div>
         </form>
 
-        <div className="mt-8 bg-card rounded-xl border shadow-sm p-6">
-          <h3 className="text-lg font-semibold mb-4">Registered Children (CHW)</h3>
+        <div className="mt-8 bg-card rounded-xl border shadow-sm overflow-hidden">
+          <div className="p-4 sm:p-6 border-b">
+            <h3 className="text-lg font-semibold text-card-foreground">Registered Children (CHW)</h3>
+          </div>
+          
           {loadingChildren ? (
-            <p className="text-muted-foreground">Loading registered children...</p>
-          ) : children.length === 0 ? (
-            <p className="text-muted-foreground">No children registered yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    {[
-                      "Child", "DOB", "Sector", "Cell", "Village", "Registered", "Actions"
-                    ].map((header) => (
-                      <th key={header} className="p-3 text-sm font-medium text-muted-foreground">{header}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {children.map((child) => (
-                    <tr key={child.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="p-3 text-sm font-medium">{child.name}</td>
-                      <td className="p-3 text-sm">{new Date(child.dob).toLocaleDateString()}</td>
-                      <td className="p-3 text-sm">{child.sector}</td>
-                      <td className="p-3 text-sm">{child.cell}</td>
-                      <td className="p-3 text-sm">{child.village}</td>
-                      <td className="p-3 text-sm">{new Date(child.registeredAt).toLocaleDateString()}</td>
-                      <td className="p-3 text-sm">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => handleEdit(child)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => confirmDelete(child.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground animate-pulse">Loading registered children...</p>
             </div>
+          ) : children.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">No children registered yet.</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile View: Card List */}
+              <div className="block sm:hidden divide-y">
+                {children.map((child) => (
+                  <div key={child.id} className="p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-foreground text-base">{child.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          DOB: {new Date(child.dob).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-9 p-0 text-blue-600 hover:bg-blue-50"
+                          onClick={() => handleEdit(child)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-9 p-0 text-red-600 hover:bg-red-50"
+                          onClick={() => confirmDelete(child.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-muted/50 p-2 rounded">
+                        <p className="text-muted-foreground mb-1 uppercase tracking-tighter font-bold">Location</p>
+                        <p className="font-medium truncate">{child.village}, {child.cell}</p>
+                      </div>
+                      <div className="bg-muted/50 p-2 rounded">
+                        <p className="text-muted-foreground mb-1 uppercase tracking-tighter font-bold">Registered</p>
+                        <p className="font-medium">{new Date(child.registeredAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View: Table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      {[
+                        "Child", "DOB", "Sector", "Cell", "Village", "Registered", "Actions"
+                      ].map((header) => (
+                        <th key={header} className="p-4 text-sm font-medium text-muted-foreground">{header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {children.map((child) => (
+                      <tr key={child.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="p-4 text-sm font-medium">{child.name}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{new Date(child.dob).toLocaleDateString()}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{child.sector}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{child.cell}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{child.village}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{new Date(child.registeredAt).toLocaleDateString()}</td>
+                        <td className="p-4 text-sm">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => handleEdit(child)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => confirmDelete(child.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

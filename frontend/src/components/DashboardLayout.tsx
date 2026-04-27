@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import logo from "@/assets/logo.jpg";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -6,9 +6,11 @@ import {
   Heart, LayoutDashboard, Users, Baby, ClipboardList,
   FileText, Settings, LogOut, Building2, BarChart3,
   UserCheck, Activity, ChevronLeft, ChevronRight, User,
+  Menu, X
 } from "lucide-react";
 import ProfileUpdateModal from "./ProfileUpdateModal";
 import Footer from "./Footer";
+import { Button } from "./ui/button";
 
 interface NavItem {
   label: string;
@@ -45,7 +47,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   if (!user) return null;
   const items = navByRole[user.role] || [];
@@ -56,21 +64,56 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border z-40 flex items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="NutriGuard logo" className="h-8 w-8 rounded-lg object-contain" />
+          <span className="font-display text-lg font-bold text-sidebar-primary-foreground">NutriGuard</span>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setMobileMenuOpen(true)}
+          className="text-sidebar-foreground"
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+      </div>
+
+      {/* Sidebar / Mobile Drawer */}
+      <div 
+        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 lg:hidden ${
+          mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+
       <aside
-        className={`bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 ${
+        className={`bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-50 fixed lg:static inset-y-0 left-0 ${
           collapsed ? "w-20" : "w-64"
+        } ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Logo */}
-        <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
-          <div className="h-9 w-9 min-w-[2.25rem] rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <img src={logo} alt="NutriGuard logo" className="h-5 w-5 object-contain" />
+        {/* Sidebar Header */}
+        <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 min-w-[2.25rem] rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <img src={logo} alt="NutriGuard logo" className="h-5 w-5 object-contain" />
+            </div>
+            {(!collapsed || mobileMenuOpen) && (
+              <span className="font-display text-lg font-bold text-sidebar-primary-foreground">NutriGuard</span>
+            )}
           </div>
-          {!collapsed && (
-            <span className="font-display text-lg font-bold text-sidebar-primary-foreground">NutriGuard</span>
-          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="lg:hidden text-sidebar-foreground"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         {/* Nav */}
@@ -88,15 +131,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 }`}
               >
                 {item.icon}
-                {!collapsed && <span>{item.label}</span>}
+                {(!collapsed || mobileMenuOpen) && <span>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom */}
+        {/* User Profile Section */}
         <div className="p-3 border-t border-sidebar-border space-y-2">
-          {!collapsed && (
+          {(!collapsed || mobileMenuOpen) ? (
             <button
               onClick={() => setShowProfileModal(true)}
               className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 hover:from-emerald-500/20 hover:to-emerald-600/20 border border-emerald-200 transition-all duration-200"
@@ -110,10 +153,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <p className="text-sm font-bold text-emerald-900 truncate drop-shadow-sm">{user.name}</p>
                 </div>
               </div>
-              <p className="text-xs text-emerald-600 font-medium">Edit Profile</p>
+              <p className="text-xs text-emerald-600 font-medium text-left">Edit Profile</p>
             </button>
-          )}
-          {collapsed && (
+          ) : (
             <button
               onClick={() => setShowProfileModal(true)}
               className="w-full p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors flex justify-center"
@@ -122,26 +164,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <User className="h-5 w-5" />
             </button>
           )}
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-red-400 transition-colors w-full"
           >
             <LogOut className="h-5 w-5" />
-            {!collapsed && <span>Sign Out</span>}
+            {(!collapsed || mobileMenuOpen) && <span>Sign Out</span>}
           </button>
         </div>
 
-        {/* Collapse toggle */}
+        {/* Collapse toggle (Desktop only) */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-3 border-t border-sidebar-border flex justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+          className="hidden lg:flex p-3 border-t border-sidebar-border justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-y-auto bg-background">
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto bg-background pt-16 lg:pt-0">
         <div className="flex flex-col min-h-full">
           <div className="flex-1">
             {children}

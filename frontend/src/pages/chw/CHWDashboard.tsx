@@ -79,14 +79,43 @@ export default function CHWDashboard() {
         </div>
 
         {/* Recent Assessments */}
-        <div className="bg-card rounded-xl border shadow-sm">
-          <div className="p-6 border-b flex items-center justify-between">
+        <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+          <div className="p-4 sm:p-6 border-b flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold text-card-foreground">Recent Assessments</h2>
             <Button variant="outline" size="sm" onClick={() => navigate("/chw/results")}>
               View All
             </Button>
           </div>
-          <div className="overflow-x-auto">
+          
+          {/* Mobile View: Card List */}
+          <div className="block sm:hidden divide-y">
+            {recentAssessments.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No assessments found.</div>
+            ) : (
+              recentAssessments.map((a) => (
+                <div key={a.id} className="p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-foreground">{a.child.name}</p>
+                      <p className="text-xs text-muted-foreground">{calculateAge(a.child.dob)} • {new Date(a.date).toLocaleDateString()}</p>
+                    </div>
+                    <RiskBadge level={a.prediction?.riskLevel || "low"} />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${a.status === "REVIEWED" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                      {a.status}
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-8 text-primary font-bold" onClick={() => navigate(`/chw/results`)}>
+                      Details
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop View: Table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">

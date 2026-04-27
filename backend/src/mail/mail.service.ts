@@ -95,7 +95,7 @@ export class MailService {
       <p>Your request for access to the <strong>NutriGuard</strong> system has been <strong>${status.toLowerCase()}</strong> by the administrator.</p>
       ${isApproved 
         ? `<p>You can now log in to the system using your email and the password you set during registration.</p>
-           <a href="${this.configService.get('FRONTEND_URL')}/login" class="button">Log In Now</a>`
+           <a href="https://nutriguard-frontend.onrender.com/login" class="button">Log In Now</a>`
         : `<p>Unfortunately, your request could not be approved at this time. Please contact support if you believe this is an error.</p>`
       }
     `;
