@@ -19,10 +19,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // 3. Shyiraho Prefix y'umushinga (Niba uyikoresha muri Frontend)
-  app.setGlobalPrefix('api');
-
-  // 4. Tegeka app kwakira requests kuri 0.0.0.0 (Ingenzi kuri Render/Linux)
+  // 3. Tegeka app kwakira requests kuri 0.0.0.0 (Ingenzi kuri Render/Linux)
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
   
