@@ -20,7 +20,7 @@ NutriGuard is an ML-powered platform designed to help healthcare workers in Rwan
 4. **Environment Variables**:
    - `DATABASE_URL`: Your MySQL connection string
    - `JWT_SECRET`: A secure random string
-   - `PYTHON_PATH`: `python3`
+   - `PYTHON_PATH`: `python3` (DO NOT use Windows paths like .venv/Scripts/python.exe)
    - `PYTHON_SCRIPT_PATH`: `../predict.py`
    - `SMTP_USER` / `SMTP_PASS`: For email notifications
 
@@ -31,6 +31,9 @@ NutriGuard is an ML-powered platform designed to help healthcare workers in Rwan
 4. **Environment Variables**:
    - `VITE_API_URL`: `https://nutriguard-z5yq.onrender.com`
 
-## Troubleshooting Prisma P1012 Error
-If you see an error about `url` not being supported in schema files, it means Render is using Prisma 7. I have pinned the project to **Prisma 6.4.1** in `backend/package.json` to prevent this. Ensure your build command uses the local prisma binary as shown above:
-`node backend/node_modules/prisma/build/index.js generate --schema=backend/prisma/schema.prisma`
+## Troubleshooting "Failed to start ML process"
+If you see an error about `ENOENT` or a path containing `.venv/Scripts/python.exe` on Render:
+1. Go to your Render Dashboard -> Backend Service -> Settings -> Environment Variables.
+2. Ensure `PYTHON_PATH` is set to `python3` (or delete it to use the system default).
+3. Ensure `PYTHON_SCRIPT_PATH` is set to `../predict.py`.
+4. Make sure your Build Command installs the Python requirements as shown above.

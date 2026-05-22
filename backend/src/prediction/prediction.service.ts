@@ -15,25 +15,27 @@ export class PredictionService {
    * 'process.cwd()' ubu iri kureba mu mizi (root) y'umushinga.
    */
   async runPrediction(inputData: any) {
-    // Mu buryo bwa production (Render), izi nzira zizaturuka muri Environment Variables
-    // Local (Windows), tuzakoresha inzira isanzwe niba nta kintu cyashyizweho
     const isWindows = process.platform === 'win32';
     
+    // Inzira ya script: default ni '../predict.py' kuko turi muri 'backend' folder
     const scriptPath = process.env.PYTHON_SCRIPT_PATH || join(process.cwd(), '..', 'predict.py');
     
-    // Hitamo python executable bitewe na environment
-    let defaultPython = isWindows ? 'python' : 'python3';
+    // Inzira ya Python executable
+    let pythonPath = 'python3'; // Default kuri Render/Linux
     
-    // Niba turi muri Windows kandi hari .venv, koresha iyo
-    if (isWindows && !process.env.PYTHON_PATH) {
+    if (process.env.PYTHON_PATH) {
+      pythonPath = process.env.PYTHON_PATH;
+    } else if (isWindows) {
+      // Local development kuri Windows
       const venvPath = join(process.cwd(), '..', '.venv', 'Scripts', 'python.exe');
-      // Turebe niba iyi file ihari (Optional but safer)
-      defaultPython = venvPath;
+      pythonPath = venvPath;
     }
 
-    const pythonPath = process.env.PYTHON_PATH || defaultPython;
-    
-    this.logger.log(`Running prediction using: ${pythonPath} with script at: ${scriptPath}`);
+    this.logger.log(`Prediction execution details:`);
+    this.logger.log(`- Platform: ${process.platform}`);
+    this.logger.log(`- Current Working Dir: ${process.cwd()}`);
+    this.logger.log(`- Python Path: ${pythonPath}`);
+    this.logger.log(`- Script Path: ${scriptPath}`);
 
     return new Promise((resolve, reject) => {
       const pythonProcess = spawn(pythonPath, [scriptPath]);
