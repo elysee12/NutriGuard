@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.jpg";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +27,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
+      <div className="absolute top-8 right-8 z-50">
+        <LanguageSelector />
+      </div>
+
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden flex-col justify-between p-12">
         <div className="absolute inset-0 opacity-10">
@@ -41,17 +48,17 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10">
           <h1 className="text-primary-foreground font-display text-4xl font-bold leading-tight mb-4">
-            Early Detection of<br />Stunting in Children
+            {t('home.hero_title')}
           </h1>
           <p className="text-primary-foreground/70 text-lg max-w-md">
-            ML-powered platform helping Rwanda's healthcare workers identify and prevent childhood stunting through data-driven assessments.
+            {t('home.subtitle')}
           </p>
         </div>
         <div className="relative z-10 flex gap-8">
           {[
-            { n: "12,450+", l: "Children Screened" },
-            { n: "340", l: "Health Workers" },
-            { n: "95%", l: "Detection Rate" },
+            { n: "12,450+", l: t('home.stats_children') },
+            { n: "340", l: t('home.stats_chw') },
+            { n: "95%", l: t('home.stats_detection') },
           ].map((s) => (
             <div key={s.l}>
               <div className="text-primary-foreground font-display text-2xl font-bold">{s.n}</div>
@@ -71,12 +78,12 @@ export default function LoginPage() {
             <span className="font-display text-xl font-bold text-foreground">NutriGuard</span>
           </div>
 
-          <h2 className="font-display text-2xl font-bold text-foreground mb-1">Welcome back</h2>
-          <p className="text-muted-foreground mb-8">Sign in to access your dashboard</p>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-1">{t('auth.welcome_back')}</h2>
+          <p className="text-muted-foreground mb-8">{t('auth.sign_in_desc')}</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -88,7 +95,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -114,22 +121,22 @@ export default function LoginPage() {
                 className="text-sm text-primary font-medium cursor-pointer hover:underline"
                 onClick={() => navigate("/forgot")}
               >
-                Forgot password?
+                {t('auth.forgot_password')}
               </span>
             </div>
 
             <Button type="submit" className="w-full h-12 text-base font-semibold">
-              Sign In
+              {t('auth.sign_in_button')}
             </Button>
           </form>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              {t('auth.no_account')}{" "}
               <span
               className="text-primary font-medium cursor-pointer hover:underline"
               onClick={() => navigate("/register")}
             >
-              Request Access
+              {t('auth.request_access')}
             </span>
             </p>
 

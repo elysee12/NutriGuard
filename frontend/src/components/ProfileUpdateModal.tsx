@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface ProfileUpdateModalProps {
   onClose: () => void;
@@ -14,6 +15,7 @@ interface ProfileUpdateModalProps {
 export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps) {
   const { user, token } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -31,8 +33,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (!name.trim()) {
       toast({
-        title: "Error",
-        description: "Name cannot be empty",
+        title: t('common.error'),
+        description: t('auth.name_empty_error'),
         variant: "destructive",
       });
       return;
@@ -40,8 +42,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (!email.trim()) {
       toast({
-        title: "Error",
-        description: "Email cannot be empty",
+        title: t('common.error'),
+        description: t('auth.email_empty_error'),
         variant: "destructive",
       });
       return;
@@ -50,8 +52,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
     // Basic email validation
     if (!email.includes("@")) {
       toast({
-        title: "Error",
-        description: "Please enter a valid email address",
+        title: t('common.error'),
+        description: t('auth.email_invalid_error'),
         variant: "destructive",
       });
       return;
@@ -74,12 +76,12 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update profile");
+        throw new Error(data.message || t('auth.profile_update_failed'));
       }
 
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: t('common.success'),
+        description: t('auth.profile_updated_success'),
       });
 
       // Update local storage with new user data
@@ -96,8 +98,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
       }, 1500);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
+        title: t('common.error'),
+        description: error.message || t('auth.profile_update_failed'),
         variant: "destructive",
       });
     } finally {
@@ -110,8 +112,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (!currentPassword.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter your current password",
+        title: t('common.error'),
+        description: t('auth.current_password_empty_error'),
         variant: "destructive",
       });
       return;
@@ -119,8 +121,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (!newPassword.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a new password",
+        title: t('common.error'),
+        description: t('auth.new_password_empty_error'),
         variant: "destructive",
       });
       return;
@@ -128,8 +130,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (newPassword.length < 6) {
       toast({
-        title: "Error",
-        description: "New password must be at least 6 characters",
+        title: t('common.error'),
+        description: t('auth.password_min_length_error'),
         variant: "destructive",
       });
       return;
@@ -137,8 +139,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
+        title: t('common.error'),
+        description: t('auth.passwords_dont_match'),
         variant: "destructive",
       });
       return;
@@ -146,8 +148,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
     if (currentPassword === newPassword) {
       toast({
-        title: "Error",
-        description: "New password must be different from current password",
+        title: t('common.error'),
+        description: t('auth.password_same_error'),
         variant: "destructive",
       });
       return;
@@ -170,12 +172,12 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update password");
+        throw new Error(data.message || t('auth.update_failed'));
       }
 
       toast({
-        title: "Success",
-        description: "Password updated successfully. Please sign in again.",
+        title: t('common.success'),
+        description: t('auth.password_updated_success'),
       });
 
       // Reset fields
@@ -191,8 +193,8 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
       }, 2000);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update password",
+        title: t('common.error'),
+        description: error.message || t('auth.update_failed'),
         variant: "destructive",
       });
     } finally {
@@ -205,7 +207,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto m-4 border border-gray-100">
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 flex items-center justify-between border-b">
-          <h2 className="text-xl font-bold">Update Profile</h2>
+          <h2 className="text-xl font-bold">{t('common.update_profile')}</h2>
           <button
             onClick={onClose}
             disabled={loading}
@@ -226,7 +228,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                 : "border-transparent text-gray-600 hover:text-gray-900"
             }`}
           >
-            Basic Info
+            {t('common.basic_info')}
           </button>
           <button
             onClick={() => setActiveTab("password")}
@@ -236,7 +238,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                 : "border-transparent text-gray-600 hover:text-gray-900"
             }`}
           >
-            Password
+            {t('auth.password')}
           </button>
         </div>
 
@@ -247,7 +249,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
             <form onSubmit={handleBasicUpdate} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-gray-700 font-medium">
-                  Full Name
+                  {t('auth.full_name')}
                 </Label>
                 <Input
                   id="name"
@@ -262,7 +264,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-700 font-medium">
-                  Email Address
+                  {t('auth.email')}
                 </Label>
                 <Input
                   id="email"
@@ -274,7 +276,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                   className="h-11 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
                 />
                 <p className="text-xs text-gray-500">
-                  You may need to re-login after changing your email
+                  {t('common.email_change_warning')}
                 </p>
               </div>
 
@@ -286,7 +288,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                   onClick={onClose}
                   disabled={loading}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -296,10 +298,10 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                   {loading ? (
                     <>
                       <Loader className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    "Save Changes"
+                    t('common.save')
                   )}
                 </Button>
               </div>
@@ -310,12 +312,12 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
           {activeTab === "password" && (
             <form onSubmit={handlePasswordUpdate} className="space-y-5">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
-                ⚠️ Changing your password will require you to sign in again
+                ⚠️ {t('common.password_change_warning')}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="currentPassword" className="text-gray-700 font-medium">
-                  Current Password
+                  {t('common.current_password')}
                 </Label>
                 <div className="relative">
                   <Input
@@ -343,7 +345,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
 
               <div className="space-y-2">
                 <Label htmlFor="newPassword" className="text-gray-700 font-medium">
-                  New Password
+                  {t('common.new_password')}
                 </Label>
                 <div className="relative">
                   <Input
@@ -363,16 +365,16 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                     {showNewPassword ? (
                       <EyeOff className="w-4 h-4" />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500">At least 6 characters</p>
+                <p className="text-xs text-gray-500">{t('common.min_6_chars')}</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">
-                  Confirm Password
+                  {t('common.confirm_new_password')}
                 </Label>
                 <div className="relative">
                   <Input
@@ -406,7 +408,7 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                   onClick={onClose}
                   disabled={loading}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -416,10 +418,10 @@ export default function ProfileUpdateModal({ onClose }: ProfileUpdateModalProps)
                   {loading ? (
                     <>
                       <Loader className="w-4 h-4 mr-2 animate-spin" />
-                      Updating...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    "Update Password"
+                    t('common.update_button', 'Update Password')
                   )}
                 </Button>
               </div>

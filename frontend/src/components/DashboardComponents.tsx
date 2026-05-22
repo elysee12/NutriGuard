@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface StatCardProps {
   title: string;
@@ -38,10 +39,11 @@ interface RiskBadgeProps {
 }
 
 export function RiskBadge({ level }: RiskBadgeProps) {
+  const { t } = useTranslation();
   const config = {
-    low: { label: "Low Risk", className: "risk-low" },
-    moderate: { label: "Moderate", className: "risk-moderate" },
-    high: { label: "High Risk", className: "risk-high" },
+    low: { label: t('dashboard.low_risk'), className: "risk-low" },
+    moderate: { label: t('dashboard.moderate_risk'), className: "risk-moderate" },
+    high: { label: t('dashboard.high_risk'), className: "risk-high" },
   };
   const c = config[level];
   return (

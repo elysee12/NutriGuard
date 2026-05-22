@@ -11,10 +11,11 @@ def predict():
         with open(model_path, 'rb') as f:
             model = pickle.load(f)
 
-        # FATA AMAKURU AVA MURI NESTJS (Arguments)
-        if len(sys.argv) < 2:
+        # FATA AMAKURU AVA MURI NESTJS (Stdin)
+        input_data = sys.stdin.read()
+        if not input_data:
+            print(json.dumps({"error": "No input data received"}))
             return
-        input_data = sys.argv[1] # Fata argument ya mbere (JSON string)
 
         features = json.loads(input_data)
         df = pd.DataFrame([features])

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface ChildRecord {
   id: number;
@@ -47,10 +48,12 @@ const occupationOptions = [
 export default function CHWAssessments() {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
   const [prediction, setPrediction] = useState<{ result: string; risk: number; recommendation: string } | null>(null);
   const [children, setChildren] = useState<ChildRecord[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     childId: 0,
     childDob: "",
@@ -137,9 +140,11 @@ export default function CHWAssessments() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
 
     if (!form.childId) {
       toast.error('Please select a registered child first.');
+      setSubmitting(false);
       return;
     }
 
@@ -186,6 +191,8 @@ export default function CHWAssessments() {
       toast.success('Assessment submitted and ML prediction generated!');
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -193,7 +200,7 @@ export default function CHWAssessments() {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-2xl">
-          <PageHeader title="Prediction Result" />
+          <PageHeader title={t('assessment.result_title')} />
           <div
             className={`rounded-xl border-2 p-8 text-center ${
               prediction.result === "Stunted" ? "border-destructive bg-destructive/5" : "border-primary bg-primary/5"
@@ -204,8 +211,10 @@ export default function CHWAssessments() {
             ) : (
               <CheckCircle className="h-16 w-16 mx-auto mb-4 text-primary" />
             )}
-            <h2 className="font-display text-2xl font-bold mb-2">{prediction.result}</h2>
-            <p className="text-muted-foreground mb-4">Risk Score: {prediction.risk}%</p>
+            <h2 className="font-display text-2xl font-bold mb-2">
+              {prediction.result === "Stunted" ? t('assessment.stunted') : t('assessment.not_stunted')}
+            </h2>
+            <p className="text-muted-foreground mb-4">{t('assessment.risk_score')}: {prediction.risk}%</p>
             <div className="w-full bg-muted rounded-full h-3 mb-6">
               <div
                 className={`h-3 rounded-full transition-all ${
@@ -241,7 +250,7 @@ export default function CHWAssessments() {
                 });
               }}
             >
-              New Assessment
+              {t('assessment.new_assessment')}
             </Button>
           </div>
         </div>
@@ -253,8 +262,8 @@ export default function CHWAssessments() {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-3xl">
-          <PageHeader title="Submit Assessment" description="Loading registered children..." />
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">Loading children...</div>
+          <PageHeader title={t('assessment.title')} description="Loading registered children..." />
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.loading')}</div>
         </div>
       </DashboardLayout>
     );
@@ -264,19 +273,19 @@ export default function CHWAssessments() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-4xl">
         <PageHeader
-          title="Submit Assessment"
+          title={t('assessment.title')}
           description="Select a registered child and submit assessment details for ML prediction"
         />
         <form onSubmit={handleSubmit} className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
           <div className="space-y-2">
-            <Label>Child</Label>
+            <Label>{t('dashboard.child')}</Label>
             <select
               className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
               value={form.childId}
               onChange={(e) => handleChildChange(Number(e.target.value))}
               required
             >
-              <option value={0}>Select child</option>
+              <option value={0}>{t('assessment.select_child')}</option>
               {children.map((child) => (
                 <option key={child.id} value={child.id}>
                   {child.name} — {child.district}/{child.sector}/{child.cell}
@@ -287,18 +296,18 @@ export default function CHWAssessments() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Sex</Label>
+              <Label>{t('common.gender')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.gender}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
-                <option value="M">Male</option>
-                <option value="F">Female</option>
+                <option value="M">{t('assessment.male')}</option>
+                <option value="F">{t('assessment.female')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
+              <Label>{t('common.dob')}</Label>
               <Input
                 type="date"
                 className="h-12"
@@ -311,7 +320,7 @@ export default function CHWAssessments() {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label>Age (days)</Label>
+              <Label>{t('assessment.age_days')}</Label>
               <Input
                 type="text"
                 className="h-12"
@@ -320,7 +329,7 @@ export default function CHWAssessments() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Mother's Education</Label>
+              <Label>{t('assessment.mother_education')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.amashuri_mama_w_umwana_yiz}
@@ -334,7 +343,7 @@ export default function CHWAssessments() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Caregiver Occupation</Label>
+              <Label>{t('assessment.caregiver_occupation')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.icyo_umurera_akora}
@@ -351,7 +360,7 @@ export default function CHWAssessments() {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label>Height (cm)</Label>
+              <Label>{t('assessment.height_cm')}</Label>
               <Input
                 type="number"
                 step="0.1"
@@ -363,7 +372,7 @@ export default function CHWAssessments() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Weight (kg)</Label>
+              <Label>{t('assessment.weight_kg')}</Label>
               <Input
                 type="number"
                 step="0.1"
@@ -375,7 +384,7 @@ export default function CHWAssessments() {
               />
             </div>
             <div className="space-y-2">
-              <Label>MUAC (mm)</Label>
+              <Label>{t('assessment.muac_mm')}</Label>
               <Input
                 type="number"
                 step="0.1"
@@ -390,115 +399,117 @@ export default function CHWAssessments() {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label>Both parents present?</Label>
+              <Label>{t('assessment.parents_present')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.umwana_afite_ababyeyi}
                 onChange={(e) => setForm({ ...form, umwana_afite_ababyeyi: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Recent illness?</Label>
+              <Label>{t('assessment.recent_illness')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.sick}
                 onChange={(e) => setForm({ ...form, sick: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Minimum meal frequency?</Label>
+              <Label>{t('assessment.meal_frequency')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.mmf}
                 onChange={(e) => setForm({ ...form, mmf: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label>Exclusive breastfeeding?</Label>
+              <Label>{t('assessment.breastfeeding')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.fbf}
                 onChange={(e) => setForm({ ...form, fbf: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Participating in VUP?</Label>
+              <Label>{t('assessment.vup_participation')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.vup}
                 onChange={(e) => setForm({ ...form, vup: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Household conflict?</Label>
+              <Label>{t('assessment.household_conflict')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.ese_haba_hari_amakimbirane}
                 onChange={(e) => setForm({ ...form, ese_haba_hari_amakimbirane: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label>Safe water?</Label>
+              <Label>{t('assessment.safe_water')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.water}
                 onChange={(e) => setForm({ ...form, water: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Handwashing facility?</Label>
+              <Label>{t('assessment.handwashing_facility')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.handwash}
                 onChange={(e) => setForm({ ...form, handwash: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Toilet access?</Label>
+              <Label>{t('assessment.toilet_access')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.toilet}
                 onChange={(e) => setForm({ ...form, toilet: e.target.value })}
               >
-                <option value="Yego">Yego</option>
-                <option value="Oya">Oya</option>
+                <option value="Yego">{t('assessment.yes')}</option>
+                <option value="Oya">{t('assessment.no')}</option>
               </select>
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button type="submit" className="flex-1 h-12 font-semibold">Submit Assessment</Button>
-            <Button type="button" variant="outline" className="h-12" onClick={() => navigate("/chw")}>Cancel</Button>
+            <Button type="submit" className="flex-1 h-12 font-semibold" disabled={submitting}>
+            {submitting ? t('common.loading') : t('assessment.submit_button')}
+          </Button>
+            <Button type="button" variant="outline" className="h-12" onClick={() => navigate("/chw")}>{t('common.cancel')}</Button>
           </div>
         </form>
       </div>

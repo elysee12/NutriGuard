@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface ResultRecord {
   id: number;
@@ -18,6 +19,7 @@ interface ResultRecord {
 
 export default function CHWResults() {
   const { token, user } = useAuth();
+  const { t } = useTranslation();
   const [results, setResults] = useState<ResultRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
@@ -35,7 +37,7 @@ export default function CHWResults() {
         });
 
         if (!response.ok) {
-          throw new Error("Unable to load prediction results");
+          throw new Error(t('assessment.load_results_failed', "Unable to load prediction results"));
         }
 
         const data: ResultRecord[] = await response.json();
@@ -57,20 +59,20 @@ export default function CHWResults() {
   const calculateAge = (dob: string) => {
     const diff = new Date().getTime() - new Date(dob).getTime();
     const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44));
-    return `${months} months`;
+    return `${months} ${t('dashboard.months')}`;
   };
 
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
-        <PageHeader title="Prediction Results" description="View all ML prediction results for your children" />
+        <PageHeader title={t('nav.results')} description={t('assessment.view_all_results', "View all ML prediction results for your children")} />
         <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
           {/* Mobile View: Card List */}
           <div className="block sm:hidden divide-y">
             {loading ? (
-              <div className="p-8 text-center text-muted-foreground animate-pulse">Loading prediction results…</div>
+              <div className="p-8 text-center text-muted-foreground animate-pulse">{t('common.loading')}</div>
             ) : results.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">No prediction results found.</div>
+              <div className="p-8 text-center text-muted-foreground">{t('dashboard.no_assessments')}</div>
             ) : (
               results.map((r) => (
                 <div key={r.id} className="p-4 space-y-3">
@@ -94,11 +96,11 @@ export default function CHWResults() {
                         style={{ width: `${r.prediction?.riskScore ?? 0}%` }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-muted-foreground">{Math.round(r.prediction?.riskScore || 0)}% Score</span>
+                    <span className="text-xs font-bold text-muted-foreground">{Math.round(r.prediction?.riskScore || 0)}% {t('dashboard.score')}</span>
                   </div>
                   <div className="flex justify-between items-center pt-1">
                     <span className={`text-xs font-bold px-2 py-1 rounded ${r.status === 'REVIEWED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {r.status}
+                      {r.status === 'REVIEWED' ? t('dashboard.reviewed') : t('dashboard.pending')}
                     </span>
                     <Button
                       variant="ghost"
@@ -111,7 +113,7 @@ export default function CHWResults() {
                       }}
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      Details
+                      {t('dashboard.details')}
                     </Button>
                   </div>
                 </div>
@@ -124,7 +126,7 @@ export default function CHWResults() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  {["Child", "Age", "Date", "Risk Level", "Score", "Review Status", "Actions"].map((h) => (
+                  {[t('dashboard.child'), t('dashboard.age'), t('common.date'), t('dashboard.risk_level'), t('dashboard.score'), t('common.status'), t('common.actions')].map((h) => (
                     <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
                   ))}
                 </tr>
@@ -133,13 +135,13 @@ export default function CHWResults() {
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      Loading prediction results…
+                      {t('common.loading')}
                     </td>
                   </tr>
                 ) : results.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      No prediction results found.
+                      {t('dashboard.no_assessments')}
                     </td>
                   </tr>
                 ) : (
@@ -170,7 +172,7 @@ export default function CHWResults() {
                       </td>
                       <td className="p-4">
                         <span className={`text-sm font-medium ${r.status === 'REVIEWED' ? 'text-success' : 'text-warning'}`}>
-                          {r.status}
+                          {r.status === 'REVIEWED' ? t('dashboard.reviewed') : t('dashboard.pending')}
                         </span>
                       </td>
                       <td className="p-4">
@@ -184,7 +186,7 @@ export default function CHWResults() {
                           }}
                         >
                           <Eye className="w-4 h-4 mr-2" />
-                          Details
+                          {t('dashboard.details')}
                         </Button>
                       </td>
                     </tr>

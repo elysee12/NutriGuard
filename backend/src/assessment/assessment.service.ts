@@ -114,6 +114,10 @@ export class AssessmentService {
         error += data.toString();
       });
 
+      pythonProcess.on('error', (err) => {
+        reject(new InternalServerErrorException(`Failed to start ML process: ${err.message}`));
+      });
+
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
           return reject(new InternalServerErrorException(`ML process failed with code ${code}: ${error}`));
@@ -134,31 +138,78 @@ export class AssessmentService {
     });
   }
 
-  async findAll() {
-    return this.prisma.assessment.findMany({
-      include: {
-        child: true,
-        chw: true,
-        prediction: true,
-      },
-    });
+  async findAll(user: any) {
+    if (user.role === 'ADMIN') {
+      return this.prisma.assessment.findMany({
+        include: {
+          child: true,
+          chw: true,
+          prediction: true,
+        },
+      });
+    } else if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || !nurse.healthCenterId) {
+        return [];
+      }
+      return this.prisma.assessment.findMany({
+        where: {
+          chw: {
+            healthCenterId: nurse.healthCenterId,
+          },
+        },
+        include: {
+          child: true,
+          chw: true,
+          prediction: true,
+        },
+      });
+    } else {
+      // CHW role
+      return this.prisma.assessment.findMany({
+        where: { chwId: user.userId },
+        include: {
+          child: true,
+          chw: true,
+          prediction: true,
+        },
+      });
+    }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user: any) {
     const assessment = await this.prisma.assessment.findUnique({
       where: { id },
       include: {
         child: true,
-        chw: true,
+        chw: {
+          include: { healthCenter: true }
+        },
         prediction: true,
       },
     });
     if (!assessment) throw new NotFoundException('Assessment not found');
+
+    // Authorization check
+    if (user.role === 'CHW' && assessment.chwId !== user.userId) {
+      throw new ForbiddenException('You can only access your own assessments');
+    }
+
+    if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || nurse.healthCenterId !== assessment.chw.healthCenterId) {
+        throw new ForbiddenException('You can only access assessments from your health center');
+      }
+    }
+
     return assessment;
   }
 
   async reviewAssessment(id: number, status: string, reviewerId: number) {
-    const assessment = await this.prisma.assessment.findUnique({ where: { id } });
+    const assessment = await this.prisma.assessment.findUnique({ 
+      where: { id },
+      include: { chw: true }
+    });
     if (!assessment) throw new NotFoundException('Assessment not found');
 
     const reviewer = await this.prisma.user.findUnique({ where: { id: reviewerId } });
@@ -168,6 +219,10 @@ export class AssessmentService {
 
     if (reviewer.role !== 'NURSE') {
       throw new ForbiddenException('Only nurses can review assessments.');
+    }
+
+    if (reviewer.healthCenterId !== assessment.chw.healthCenterId) {
+      throw new ForbiddenException('You can only review assessments from your health center');
     }
 
     return this.prisma.assessment.update({

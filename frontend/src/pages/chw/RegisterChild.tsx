@@ -8,6 +8,35 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import locationsData from "@/assets/rwanda_locations.json";
+import { useTranslation } from "react-i18next";
+
+interface LocationItem {
+  type: string;
+  name: string;
+}
+
+interface District extends LocationItem {
+  sectors: Sector[];
+}
+
+interface Sector extends LocationItem {
+  cells: Cell[];
+}
+
+interface Cell extends LocationItem {
+  villages: string[];
+}
+
+interface Province extends LocationItem {
+  districts: District[];
+}
+
+interface LocationData {
+  items: Province[];
+}
+
+const typedLocations = locationsData as LocationData;
 import { Pencil, Trash2, X } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -29,6 +58,7 @@ interface ChildRecord {
 export default function RegisterChild() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     name: "",
@@ -36,7 +66,7 @@ export default function RegisterChild() {
     gender: "M",
     motherName: "",
     healthCenter: user?.healthCenter || "",
-    district: user?.district || "",
+    district: "Kicukiro",
     sector: user?.sector || "",
     cell: user?.cell || "",
     village: user?.village || "",
@@ -48,6 +78,22 @@ export default function RegisterChild() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [childToDelete, setChildToDelete] = useState<number | null>(null);
+
+  const [villagesList, setVillagesList] = useState<string[]>([]);
+
+  // Update villages based on the cell
+  useEffect(() => {
+    if (form.district && form.sector && form.cell) {
+      const districtData = typedLocations.items
+        .flatMap((p) => p.districts)
+        .find((d) => d.name === form.district);
+      const sectorData = districtData?.sectors.find((s) => s.name === form.sector);
+      const cellData = sectorData?.cells.find((c) => c.name === form.cell);
+      setVillagesList(cellData ? [...cellData.villages].sort() : []);
+    } else {
+      setVillagesList([]);
+    }
+  }, [form.district, form.sector, form.cell]);
 
   useEffect(() => {
     if (user && !editingChild) {
@@ -79,7 +125,7 @@ export default function RegisterChild() {
         });
 
         if (!response.ok) {
-          throw new Error('Unable to load registered children');
+          throw new Error(t('assessment.load_children_failed', 'Unable to load registered children'));
         }
 
         const data: ChildRecord[] = await response.json();
@@ -213,92 +259,98 @@ export default function RegisterChild() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-2xl">
         <PageHeader 
-          title="Register Child" 
-          description="Add a new child under 5 to the system" 
+          title={t('nav.register_child')} 
+          description={t('assessment.add_child_desc', "Add a new child under 5 to the system")} 
         />
         <form onSubmit={handleSubmit} className="bg-card rounded-xl border shadow-sm p-6 space-y-5">
           <div className="space-y-2">
-            <Label>Child's Full Name</Label>
-            <Input className="h-12" placeholder="Enter child's name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            <Label>{t('assessment.full_name')}</Label>
+            <Input className="h-12" placeholder={t('assessment.enter_child_name', "Enter child's name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
+              <Label>{t('common.dob')}</Label>
               <Input type="date" className="h-12" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>Gender</Label>
+              <Label>{t('common.gender')}</Label>
               <select
                 className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.gender}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
-                <option value="M">Male</option>
-                <option value="F">Female</option>
+                <option value="M">{t('assessment.male')}</option>
+                <option value="F">{t('assessment.female')}</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Mother/Guardian Name</Label>
-            <Input className="h-12" placeholder="Enter guardian name" value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} required />
+            <Label>{t('assessment.mother_name')}</Label>
+            <Input className="h-12" placeholder={t('assessment.enter_guardian_name', "Enter guardian name")} value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>District</Label>
-              <Input className="h-12" value={form.district} disabled />
+              <Label>{t('location.district')}</Label>
+              <Input className="h-12 bg-muted cursor-not-allowed" value="Kicukiro" disabled />
             </div>
             <div className="space-y-2">
-              <Label>Health Center</Label>
-              <Input className="h-12" value={form.healthCenter} disabled />
+              <Label>{t('location.health_center')}</Label>
+              <Input className="h-12 bg-muted cursor-not-allowed" value={form.healthCenter} disabled />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Sector</Label>
+              <Label>{t('location.sector')}</Label>
               <Input className="h-12" value={form.sector} disabled />
             </div>
             <div className="space-y-2">
-              <Label>Cell</Label>
+              <Label>{t('location.cell')}</Label>
               <Input className="h-12" value={form.cell} disabled />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Village</Label>
-            <Input
-              className="h-12"
-              placeholder="Enter village"
+            <Label>{t('location.village')}</Label>
+            <select
+              className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
               value={form.village}
               onChange={(e) => setForm({ ...form, village: e.target.value })}
               required
-            />
+            >
+              <option value="">{t('location.select_village')}</option>
+              {villagesList.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" className="flex-1 h-12 font-semibold">
-              Register Child
+              {t('assessment.register_button')}
             </Button>
             <Button type="button" variant="outline" className="h-12" onClick={() => navigate("/chw")}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </form>
 
         <div className="mt-8 bg-card rounded-xl border shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 border-b">
-            <h3 className="text-lg font-semibold text-card-foreground">Registered Children (CHW)</h3>
+            <h3 className="text-lg font-semibold text-card-foreground">{t('assessment.registered_children')} (CHW)</h3>
           </div>
           
           {loadingChildren ? (
             <div className="p-8 text-center">
-              <p className="text-muted-foreground animate-pulse">Loading registered children...</p>
+              <p className="text-muted-foreground animate-pulse">{t('common.loading')}</p>
             </div>
           ) : children.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-muted-foreground">No children registered yet.</p>
+              <p className="text-muted-foreground">{t('assessment.no_children')}</p>
             </div>
           ) : (
             <>
@@ -334,11 +386,11 @@ export default function RegisterChild() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-muted/50 p-2 rounded">
-                        <p className="text-muted-foreground mb-1 uppercase tracking-tighter font-bold">Location</p>
+                        <p className="text-muted-foreground mb-1 uppercase tracking-tighter font-bold">{t('location.location_title')}</p>
                         <p className="font-medium truncate">{child.village}, {child.cell}</p>
                       </div>
                       <div className="bg-muted/50 p-2 rounded">
-                        <p className="text-muted-foreground mb-1 uppercase tracking-tighter font-bold">Registered</p>
+                        <p className="text-muted-foreground mb-1 uppercase tracking-tighter font-bold">{t('common.registered')}</p>
                         <p className="font-medium">{new Date(child.registeredAt).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -352,7 +404,7 @@ export default function RegisterChild() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       {[
-                        "Child", "DOB", "Sector", "Cell", "Village", "Registered", "Actions"
+                        t('common.child'), t('common.dob'), t('location.sector'), t('location.cell'), t('location.village'), t('common.registered'), t('common.actions')
                       ].map((header) => (
                         <th key={header} className="p-4 text-sm font-medium text-muted-foreground">{header}</th>
                       ))}
@@ -401,74 +453,80 @@ export default function RegisterChild() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Child Record</DialogTitle>
+            <DialogTitle>{t('assessment.edit_child_title')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Child's Full Name</Label>
+              <Label>{t('assessment.full_name')}</Label>
               <Input className="h-11" placeholder="Enter child's name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Date of Birth</Label>
+                <Label>{t('common.dob')}</Label>
                 <Input type="date" className="h-11" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>Gender</Label>
+                <Label>{t('common.gender')}</Label>
                 <select
                   className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                   value={form.gender}
                   onChange={(e) => setForm({ ...form, gender: e.target.value })}
                 >
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
+                  <option value="M">{t('assessment.male')}</option>
+                  <option value="F">{t('assessment.female')}</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Mother/Guardian Name</Label>
+              <Label>{t('assessment.mother_name')}</Label>
               <Input className="h-11" placeholder="Enter guardian name" value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} required />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>District</Label>
-                <Input className="h-11" value={form.district} disabled />
+                <Label>{t('location.district')}</Label>
+                <Input className="h-11 bg-muted cursor-not-allowed" value="Kicukiro" disabled />
               </div>
               <div className="space-y-2">
-                <Label>Health Center</Label>
-                <Input className="h-11" value={form.healthCenter} disabled />
+                <Label>{t('location.health_center')}</Label>
+                <Input className="h-11 bg-muted cursor-not-allowed" value={form.healthCenter} disabled />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Sector</Label>
+                <Label>{t('location.sector')}</Label>
                 <Input className="h-11" value={form.sector} disabled />
               </div>
               <div className="space-y-2">
-                <Label>Cell</Label>
+                <Label>{t('location.cell')}</Label>
                 <Input className="h-11" value={form.cell} disabled />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Village</Label>
-              <Input
-                className="h-11"
-                placeholder="Enter village"
+              <Label>{t('location.village')}</Label>
+              <select
+                className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={form.village}
                 onChange={(e) => setForm({ ...form, village: e.target.value })}
                 required
-              />
+              >
+                <option value="">{t('location.select_village')}</option>
+                {villagesList.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <DialogFooter className="pt-4">
               <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={cancelEdit}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={cancelEdit}>{t('common.cancel')}</Button>
               </DialogClose>
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">Update Record</Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">{t('assessment.update_button')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -478,7 +536,7 @@ export default function RegisterChild() {
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
-        message="Are you sure you want to delete this child record?"
+        message={t('assessment.delete_confirm_msg')}
       />
     </DashboardLayout>
   );

@@ -1,7 +1,9 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
 import logo from "@/assets/logo.jpg";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "./LanguageSelector";
 import {
   Heart, LayoutDashboard, Users, Baby, ClipboardList,
   FileText, Settings, LogOut, Building2, BarChart3,
@@ -18,37 +20,38 @@ interface NavItem {
   path: string;
 }
 
-const navByRole: Record<UserRole, NavItem[]> = {
-  ADMIN: [
-    { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: "/admin" },
-    { label: "Approve Users", icon: <UserCheck className="h-5 w-5" />, path: "/admin/users" },
-    { label: "Health Centers", icon: <Building2 className="h-5 w-5" />, path: "/admin/centers" },
-    { label: "Statistics", icon: <BarChart3 className="h-5 w-5" />, path: "/admin/stats" },
-    { label: "System Logs", icon: <Activity className="h-5 w-5" />, path: "/admin/logs" },
-    { label: "Settings", icon: <Settings className="h-5 w-5" />, path: "/admin/settings" },
-  ],
-  NURSE: [
-    { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: "/nurse" },
-    { label: "Register Child", icon: <Baby className="h-5 w-5" />, path: "/nurse/register-child" },
-    { label: "Assessments", icon: <ClipboardList className="h-5 w-5" />, path: "/nurse/assessments" },
-    { label: "CHW Monitoring", icon: <Users className="h-5 w-5" />, path: "/nurse/chw" },
-    { label: "Reports", icon: <FileText className="h-5 w-5" />, path: "/nurse/reports" },
-  ],
-  CHW: [
-    { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: "/chw" },
-    { label: "Register Child", icon: <Baby className="h-5 w-5" />, path: "/chw/register" },
-    { label: "Assessments", icon: <ClipboardList className="h-5 w-5" />, path: "/chw/assessments" },
-    { label: "Results", icon: <BarChart3 className="h-5 w-5" />, path: "/chw/results" },
-  ],
-};
-
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const navByRole = useMemo((): Record<UserRole, NavItem[]> => ({
+    ADMIN: [
+      { label: t("nav.dashboard"), icon: <LayoutDashboard className="h-5 w-5" />, path: "/admin" },
+      { label: t("nav.approve_users", "Approve Users"), icon: <UserCheck className="h-5 w-5" />, path: "/admin/users" },
+      { label: t("nav.health_centers", "Health Centers"), icon: <Building2 className="h-5 w-5" />, path: "/admin/centers" },
+      { label: t("nav.statistics", "Statistics"), icon: <BarChart3 className="h-5 w-5" />, path: "/admin/stats" },
+      { label: t("nav.system_logs", "System Logs"), icon: <Activity className="h-5 w-5" />, path: "/admin/logs" },
+      { label: t("nav.settings", "Settings"), icon: <Settings className="h-5 w-5" />, path: "/admin/settings" },
+    ],
+    NURSE: [
+      { label: t("nav.dashboard"), icon: <LayoutDashboard className="h-5 w-5" />, path: "/nurse" },
+      { label: t("nav.register_child"), icon: <Baby className="h-5 w-5" />, path: "/nurse/register-child" },
+      { label: t("nav.assessments"), icon: <ClipboardList className="h-5 w-5" />, path: "/nurse/assessments" },
+      { label: t("nav.chw_monitoring"), icon: <Users className="h-5 w-5" />, path: "/nurse/chw" },
+      { label: t("nav.reports"), icon: <FileText className="h-5 w-5" />, path: "/nurse/reports" },
+    ],
+    CHW: [
+      { label: t("nav.dashboard"), icon: <LayoutDashboard className="h-5 w-5" />, path: "/chw" },
+      { label: t("nav.register_child"), icon: <Baby className="h-5 w-5" />, path: "/chw/register" },
+      { label: t("nav.assessments"), icon: <ClipboardList className="h-5 w-5" />, path: "/chw/assessments" },
+      { label: t("nav.results", "Results"), icon: <BarChart3 className="h-5 w-5" />, path: "/chw/results" },
+    ],
+  }), [t]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -71,14 +74,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <img src={logo} alt="NutriGuard logo" className="h-8 w-8 rounded-lg object-contain" />
           <span className="font-display text-lg font-bold text-sidebar-primary-foreground">NutriGuard</span>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setMobileMenuOpen(true)}
-          className="text-sidebar-foreground"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
+        <div className="flex items-center gap-4">
+          <LanguageSelector className="scale-75 origin-right" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setMobileMenuOpen(true)}
+            className="text-sidebar-foreground"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
       {/* Sidebar / Mobile Drawer */}
@@ -137,6 +143,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
+        {/* Language Selection Sidebar Bottom */}
+        <div className="p-4 border-t border-sidebar-border flex flex-col gap-2">
+          {(!collapsed || mobileMenuOpen) && (
+            <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-2">
+              {t('common.language', 'Language')}
+            </span>
+          )}
+          <LanguageSelector className={collapsed && !mobileMenuOpen ? "flex-col" : ""} />
+        </div>
+
         {/* User Profile Section */}
         <div className="p-3 border-t border-sidebar-border space-y-2">
           {(!collapsed || mobileMenuOpen) ? (
@@ -148,18 +164,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-white">
                   <User className="h-4 w-4" />
                 </div>
-                <div className="flex-1 text-left overflow-hidden">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-700/70">Logged in as</p>
-                  <p className="text-sm font-bold text-emerald-900 truncate drop-shadow-sm">{user.name}</p>
+                <div className="text-left overflow-hidden">
+                  <p className="text-xs text-emerald-800 font-bold uppercase tracking-tight truncate">{t('nav.logged_in_as')}</p>
+                  <p className="text-sm text-sidebar-primary-foreground font-bold truncate leading-tight">{user.name}</p>
                 </div>
               </div>
-              <p className="text-xs text-emerald-600 font-medium text-left">Edit Profile</p>
+              <div className="flex items-center justify-between text-[10px] text-emerald-700 font-medium">
+                <span>{user.role}</span>
+                <span className="flex items-center gap-0.5 hover:text-emerald-900 transition-colors">
+                  {t('nav.edit_profile')}
+                </span>
+              </div>
             </button>
           ) : (
             <button
               onClick={() => setShowProfileModal(true)}
-              className="w-full p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors flex justify-center"
-              title="Edit Profile"
+              className="w-full h-10 flex items-center justify-center rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
+              title={t('nav.edit_profile')}
             >
               <User className="h-5 w-5" />
             </button>
@@ -167,10 +188,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-red-400 transition-colors w-full"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors ${
+              collapsed && !mobileMenuOpen ? "justify-center" : ""
+            }`}
           >
             <LogOut className="h-5 w-5" />
-            {(!collapsed || mobileMenuOpen) && <span>Sign Out</span>}
+            {(!collapsed || mobileMenuOpen) && <span>{t('nav.sign_out')}</span>}
           </button>
         </div>
 

@@ -11,10 +11,29 @@ export class UserService {
     private mailService: MailService,
   ) {}
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      include: { healthCenter: true },
-    });
+  async findAll(user: any) {
+    if (user.role === 'ADMIN') {
+      return this.prisma.user.findMany({
+        include: { healthCenter: true },
+      });
+    } else if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || !nurse.healthCenterId) {
+        return [];
+      }
+      return this.prisma.user.findMany({
+        where: { healthCenterId: nurse.healthCenterId },
+        include: { healthCenter: true },
+      });
+    } else {
+      // CHW can only see themselves or maybe other CHWs in same center? 
+      // For now, let's just return them or empty if they shouldn't see others.
+      // Usually CHWs don't need to fetch all users.
+      return this.prisma.user.findMany({
+        where: { id: user.userId },
+        include: { healthCenter: true },
+      });
+    }
   }
 
   async findOne(id: number) {

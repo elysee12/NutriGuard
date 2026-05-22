@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body, UseGuards, ParseIntPipe, Query, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, UseGuards, ParseIntPipe, Query, Delete, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserStatus } from '@prisma/client';
@@ -9,8 +9,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Req() req) {
+    return this.userService.findAll(req.user);
   }
 
   @Get(':id')

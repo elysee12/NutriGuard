@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface UserRecord {
   id: number;
@@ -43,11 +44,11 @@ interface CHWStats {
 
 export default function NurseCHWMonitoring() {
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const center = user?.healthCenter || "";
   const [search, setSearch] = useState("");
   const [chws, setChws] = useState<CHWStats[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVillage, setSelectedVillage] = useState("");
 
   useEffect(() => {
     const loadCHWData = async () => {
@@ -89,7 +90,7 @@ export default function NurseCHWMonitoring() {
             name: chw.name,
             submissions: chwAssessments.length,
             children: assignedChildren.length,
-            lastActive: lastAssessment ? new Date(lastAssessment.date).toLocaleDateString() : 'No activity',
+            lastActive: lastAssessment ? new Date(lastAssessment.date).toLocaleDateString() : t('nurse.no_activity'),
             lateSubmissions,
             highRiskPending: pendingAssessments.filter((assessment) => assessment.prediction?.riskLevel === 'high').length,
             childrenNames: assignedChildren.map((child) => child.name).slice(0, 10),
@@ -106,7 +107,7 @@ export default function NurseCHWMonitoring() {
     };
 
     loadCHWData();
-  }, [API_URL, center, token]);
+  }, [API_URL, center, token, t]);
 
   const filtered = useMemo(
     () => chws.filter(
@@ -121,21 +122,21 @@ export default function NurseCHWMonitoring() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
         <PageHeader
-          title="CHW Monitoring"
-          description={center ? `Health Center: ${center}` : "Track community health worker activity and performance"}
+          title={t('nav.chw_monitoring')}
+          description={center ? t('nurse.health_center_label', { center }) : t('nurse.chw_monitoring_desc')}
         />
         <div className="mb-4">
           <Input
-            placeholder="Search CHWs or children"
+            placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
         {loading ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">Loading CHW data…</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.loading')}</div>
         ) : filtered.length === 0 ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">No CHWs found for this center.</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('nurse.no_chws_found')}</div>
         ) : (
           <div className="grid gap-4">
             {filtered.map((c) => (
@@ -147,35 +148,35 @@ export default function NurseCHWMonitoring() {
                     </div>
                     <div>
                       <h3 className="font-display font-semibold text-foreground">{c.name}</h3>
-                      <p className="text-sm text-muted-foreground">Last active: {c.lastActive}</p>
+                      <p className="text-sm text-muted-foreground">{t('nurse.last_active', { date: c.lastActive })}</p>
                     </div>
                   </div>
                   {c.lateSubmissions > 0 && (
                     <span className="risk-high text-xs font-semibold px-2.5 py-1 rounded-full border">
-                      {c.lateSubmissions} late submissions
+                      {t('nurse.late_submissions_count', { count: c.lateSubmissions })}
                     </span>
                   )}
                 </div>
                 <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t">
                   <div>
-                    <p className="text-sm text-muted-foreground">Submissions</p>
+                    <p className="text-sm text-muted-foreground">{t('nurse.submissions')}</p>
                     <p className="text-lg font-bold text-foreground">{c.submissions}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Children</p>
+                    <p className="text-sm text-muted-foreground">{t('admin.children')}</p>
                     <p className="text-lg font-bold text-foreground">{c.children}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Late Submissions</p>
+                    <p className="text-sm text-muted-foreground">{t('nurse.late_submissions')}</p>
                     <p className={`text-lg font-bold ${c.lateSubmissions > 0 ? "text-destructive" : "text-success"}`}>{c.lateSubmissions}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">High Risk Pending</p>
+                    <p className="text-sm text-muted-foreground">{t('nurse.high_risk_pending')}</p>
                     <p className={`text-lg font-bold ${c.highRiskPending > 0 ? "text-warning" : "text-success"}`}>{c.highRiskPending}</p>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-sm font-medium">Children assigned</p>
+                  <p className="text-sm font-medium">{t('nurse.children_assigned')}</p>
                   <ul className="list-disc list-inside text-sm text-muted-foreground">
                     {c.childrenNames.map((n) => (
                       <li key={n}>{n}</li>

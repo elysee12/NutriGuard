@@ -55,6 +55,7 @@ export class ChildService {
         chwId,
         healthCenterId,
       },
+      include: { chw: true },
     });
   }
 
@@ -115,6 +116,7 @@ export class ChildService {
     return this.prisma.child.update({
       where: { id },
       data: updateData,
+      include: { chw: true },
     });
   }
 

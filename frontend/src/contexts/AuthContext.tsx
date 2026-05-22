@@ -10,6 +10,7 @@ interface AuthUser {
   email: string;
   role: UserRole;
   healthCenter?: string;
+  healthCenterId?: number;
   district?: string;
   sector?: string;
   cell?: string;

@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/DashboardComponents";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface DashboardStats {
   totalUsers: number;
@@ -14,6 +15,7 @@ interface DashboardStats {
 
 export default function AdminStats() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,22 +43,22 @@ export default function AdminStats() {
 
   const statsList = stats
     ? [
-        { label: "Total Users", value: stats.totalUsers, sub: `${stats.pendingUsers} pending` },
-        { label: "Health Centers", value: stats.totalHealthCenters, sub: "Across the network" },
-        { label: "Children Screened", value: stats.totalChildren, sub: "Total assessments submitted" },
-        { label: "High Risk Cases", value: stats.highRiskCount, sub: "Priority follow-up required" },
+        { label: t('admin.total_users'), value: stats.totalUsers, sub: `${stats.pendingUsers} ${t('admin.pending')}` },
+        { label: t('admin.health_centers'), value: stats.totalHealthCenters, sub: t('admin.across_network') },
+        { label: t('admin.children_screened'), value: stats.totalChildren, sub: t('admin.total_assessments') },
+        { label: t('admin.high_risk_cases'), value: stats.highRiskCount, sub: t('admin.priority_follow_up') },
       ]
     : [];
 
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
-        <PageHeader title="National Statistics" description="Overview of stunting indicators across Rwanda" />
+        <PageHeader title={t('admin.national_statistics')} description={t('admin.stats_desc')} />
 
         {loading ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">Loading statistics…</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.loading')}</div>
         ) : statsList.length === 0 ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">No statistics available.</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.no_results')}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {statsList.map((item) => (

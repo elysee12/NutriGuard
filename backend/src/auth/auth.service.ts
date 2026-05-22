@@ -85,6 +85,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         healthCenter: user.healthCenter?.name,
+        healthCenterId: user.healthCenterId,
         district: user.district,
         sector: user.sector,
         cell: user.cell,

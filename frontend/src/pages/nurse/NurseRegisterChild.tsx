@@ -11,6 +11,35 @@ import { Search, AlertCircle, CheckCircle2, Pencil, Trash2, X } from "lucide-rea
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { API_URL } from "@/lib/api";
+import locationsData from "@/assets/rwanda_locations.json";
+import { useTranslation } from "react-i18next";
+
+interface LocationItem {
+  type: string;
+  name: string;
+}
+
+interface District extends LocationItem {
+  sectors: Sector[];
+}
+
+interface Sector extends LocationItem {
+  cells: Cell[];
+}
+
+interface Cell extends LocationItem {
+  villages: string[];
+}
+
+interface Province extends LocationItem {
+  districts: District[];
+}
+
+interface LocationData {
+  items: Province[];
+}
+
+const typedLocations = locationsData as LocationData;
 
 interface CHWRecord {
   id: number;
@@ -46,13 +75,14 @@ interface ChildRecord {
 export default function NurseRegisterChild() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     name: "",
     dob: "",
     gender: "M",
     motherName: "",
-    district: "",
+    district: "Kicukiro",
     sector: "",
     cell: "",
     village: "",
@@ -68,6 +98,87 @@ export default function NurseRegisterChild() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [childToDelete, setChildToDelete] = useState<number | null>(null);
+
+  const [districtsList, setDistrictsList] = useState<string[]>([]);
+  const [sectorsList, setSectorsList] = useState<string[]>([]);
+  const [cellsList, setCellsList] = useState<string[]>([]);
+  const [villagesList, setVillagesList] = useState<string[]>([]);
+  const [availableCHWs, setAvailableCHWs] = useState<CHWRecord[]>([]);
+  const [loadingCHWs, setLoadingCHWs] = useState(false);
+
+  // Load all CHWs for the nurse's health center
+  useEffect(() => {
+    const loadCHWs = async () => {
+      if (!token) return;
+      setLoadingCHWs(true);
+      try {
+        const response = await fetch(`${API_URL}/user`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const allUsers: CHWRecord[] = await response.json();
+          // Filter CHWs from the same health center
+          const nurseHCId = user?.healthCenterId;
+          const filteredCHWs = allUsers.filter(u => 
+            u.role === 'CHW' && 
+            u.healthCenter?.id === nurseHCId &&
+            u.status === 'APPROVED'
+          );
+          setAvailableCHWs(filteredCHWs);
+        }
+      } catch (error) {
+        console.error("Failed to load CHWs:", error);
+      } finally {
+        setLoadingCHWs(false);
+      }
+    };
+    loadCHWs();
+  }, [token, user?.healthCenterId]);
+
+  // Initialize districts
+  useEffect(() => {
+    // Only Kicukiro for this project
+    setDistrictsList(["Kicukiro"]);
+  }, []);
+
+  // Update sectors when district changes
+  useEffect(() => {
+    if (form.district) {
+      const districtData = typedLocations.items
+        .flatMap((p) => p.districts)
+        .find((d) => d.name === form.district);
+      setSectorsList(districtData ? districtData.sectors.map((s) => s.name).sort() : []);
+    } else {
+      setSectorsList([]);
+    }
+  }, [form.district]);
+
+  // Update cells when sector changes
+  useEffect(() => {
+    if (form.district && form.sector) {
+      const districtData = typedLocations.items
+        .flatMap((p) => p.districts)
+        .find((d) => d.name === form.district);
+      const sectorData = districtData?.sectors.find((s) => s.name === form.sector);
+      setCellsList(sectorData ? sectorData.cells.map((c) => c.name).sort() : []);
+    } else {
+      setCellsList([]);
+    }
+  }, [form.district, form.sector]);
+
+  // Update villages when cell changes
+  useEffect(() => {
+    if (form.district && form.sector && form.cell) {
+      const districtData = typedLocations.items
+        .flatMap((p) => p.districts)
+        .find((d) => d.name === form.district);
+      const sectorData = districtData?.sectors.find((s) => s.name === form.sector);
+      const cellData = sectorData?.cells.find((c) => c.name === form.cell);
+      setVillagesList(cellData ? [...cellData.villages].sort() : []);
+    } else {
+      setVillagesList([]);
+    }
+  }, [form.district, form.sector, form.cell]);
 
   // Load registered children
   useEffect(() => {
@@ -87,7 +198,7 @@ export default function NurseRegisterChild() {
         });
 
         if (!response.ok) {
-          throw new Error('Unable to load registered children');
+          throw new Error(t('assessment.load_children_failed', 'Unable to load registered children'));
         }
 
         const data: ChildRecord[] = await response.json();
@@ -101,7 +212,7 @@ export default function NurseRegisterChild() {
     };
 
     loadChildren();
-  }, [token, API_URL]);
+  }, [token, API_URL, t]);
 
   const handleEdit = (child: ChildRecord) => {
     setEditingChild(child);
@@ -127,7 +238,7 @@ export default function NurseRegisterChild() {
         sector: child.sector,
         cell: child.cell,
         village: child.village,
-        healthCenter: { id: 0, name: "Assigned CHW" }
+        healthCenter: { id: 0, name: t('assessment.assigned_chw', "Assigned CHW") }
       });
     } else {
       setSelectedChw(null);
@@ -139,7 +250,7 @@ export default function NurseRegisterChild() {
   // Search for CHWs when village is entered
   const searchChws = async () => {
     if (!form.district || !form.sector || !form.cell || !form.village) {
-      toast.error("Please enter District, Sector, Cell, and Village");
+      toast.error(t('assessment.location_required_error', "Please enter District, Sector, Cell, and Village"));
       return;
     }
 
@@ -162,23 +273,23 @@ export default function NurseRegisterChild() {
       });
 
       if (!response.ok) {
-        throw new Error('Unable to search CHWs');
+        throw new Error(t('assessment.chw_search_failed', 'Unable to search CHWs'));
       }
 
       const data: CHWRecord[] = await response.json();
       setChws(data);
 
       if (data.length === 0) {
-        toast.error("No CHWs are assigned to this location");
+        toast.error(t('assessment.no_chws_location', "No CHWs are assigned to this location"));
       } else {
-        toast.success(`Found ${data.length} CHW(s) in this location`);
+        toast.success(t('assessment.chws_found', { count: data.length }, `Found ${data.length} CHW(s) in this location`));
         if (data.length === 1) {
           setSelectedChw(data[0]);
           setForm((prev) => ({ ...prev, chwId: data[0].id }));
         }
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to search CHWs");
+      toast.error(error.message || t('assessment.chw_search_failed', "Failed to search CHWs"));
     } finally {
       setSearchingChws(false);
     }
@@ -208,11 +319,11 @@ export default function NurseRegisterChild() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete child');
+        throw new Error(t('assessment.delete_child_failed', 'Failed to delete child'));
       }
 
       setChildren((prev) => prev.filter((c) => c.id !== childToDelete));
-      toast.success("Child record deleted successfully");
+      toast.success(t('assessment.child_deleted_success', "Child record deleted successfully"));
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -229,7 +340,7 @@ export default function NurseRegisterChild() {
       dob: "",
       gender: "M",
       motherName: "",
-      district: "",
+      district: "Kicukiro",
       sector: "",
       cell: "",
       village: "",
@@ -243,22 +354,22 @@ export default function NurseRegisterChild() {
     e.preventDefault();
 
     if (!form.name.trim()) {
-      toast.error("Child name is required");
+      toast.error(t('assessment.name_required', "Child name is required"));
       return;
     }
 
     if (!form.dob) {
-      toast.error("Date of birth is required");
+      toast.error(t('assessment.dob_required', "Date of birth is required"));
       return;
     }
 
     if (!form.motherName.trim()) {
-      toast.error("Mother/Guardian name is required");
+      toast.error(t('assessment.mother_name_required', "Mother/Guardian name is required"));
       return;
     }
 
     if (!form.district.trim() || !form.sector.trim() || !form.cell.trim() || !form.village.trim()) {
-      toast.error("All location fields are required");
+      toast.error(t('assessment.location_all_required', "All location fields are required"));
       return;
     }
 
@@ -288,17 +399,17 @@ export default function NurseRegisterChild() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || `Failed to ${editingChild ? 'update' : 'register'} child`);
+        throw new Error(data.message || t('assessment.register_failed', { action: editingChild ? 'update' : 'register' }, `Failed to ${editingChild ? 'update' : 'register'} child`));
       }
 
       if (editingChild) {
         setChildren((prev) => prev.map((c) => (c.id === editingChild.id ? data : c)));
-        toast.success("Child record updated successfully!");
+        toast.success(t('assessment.child_updated_success', "Child record updated successfully!"));
         setEditingChild(null);
         setIsEditDialogOpen(false);
       } else {
         setChildren((prev) => [data, ...prev]);
-        toast.success("Child registered successfully!");
+        toast.success(t('assessment.child_registered_success', "Child registered successfully!"));
       }
 
       // Reset form
@@ -322,24 +433,24 @@ export default function NurseRegisterChild() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-4xl">
         <PageHeader 
-          title="Register Child" 
-          description="Register a child and assign their CHW provider by location"
+          title={t('nav.register_child')} 
+          description={t('assessment.register_child_desc', "Register a child and assign their CHW provider")}
         />
 
         {/* Main Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Left: Registration Form */}
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6 mb-8">
+          {/* Registration Form */}
+          <div>
             <form onSubmit={handleSubmit} className="bg-card rounded-xl border shadow-sm p-6 space-y-5">
               {/* Child Information */}
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-foreground">Child Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">{t('assessment.child_info')}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Child's Full Name</Label>
+                    <Label>{t('assessment.full_name')}</Label>
                     <Input 
                       className="h-11" 
-                      placeholder="Enter child's name" 
+                      placeholder={t('assessment.enter_child_name', "Enter child's name")} 
                       value={form.name} 
                       onChange={(e) => setForm({ ...form, name: e.target.value })} 
                       required 
@@ -347,7 +458,7 @@ export default function NurseRegisterChild() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Date of Birth</Label>
+                      <Label>{t('common.dob')}</Label>
                       <Input 
                         type="date" 
                         className="h-11" 
@@ -357,22 +468,22 @@ export default function NurseRegisterChild() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Gender</Label>
+                      <Label>{t('common.gender')}</Label>
                       <select
                         className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         value={form.gender}
                         onChange={(e) => setForm({ ...form, gender: e.target.value })}
                       >
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
+                        <option value="M">{t('assessment.male')}</option>
+                        <option value="F">{t('assessment.female')}</option>
                       </select>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Mother/Guardian Name</Label>
+                    <Label>{t('assessment.mother_name')}</Label>
                     <Input 
                       className="h-11" 
-                      placeholder="Enter guardian name" 
+                      placeholder={t('assessment.enter_guardian_name', "Enter guardian name")} 
                       value={form.motherName} 
                       onChange={(e) => setForm({ ...form, motherName: e.target.value })} 
                       required 
@@ -383,60 +494,107 @@ export default function NurseRegisterChild() {
 
               {/* Location Information */}
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-foreground">Location Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">{t('assessment.location_info')}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>District</Label>
-                    <Input 
-                      className="h-11" 
-                      placeholder="E.g., Kigali, Huye, Muhanga" 
-                      value={form.district} 
-                      onChange={(e) => setForm({ ...form, district: e.target.value })} 
-                      required 
-                    />
+                    <Label>{t('location.district')}</Label>
+                    <select
+                      className="flex h-11 w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed"
+                      value={form.district}
+                      disabled
+                      required
+                    >
+                      <option value="Kicukiro">Kicukiro</option>
+                    </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Sector</Label>
-                      <Input 
-                        className="h-11" 
-                        placeholder="E.g., Ruhunga" 
-                        value={form.sector} 
-                        onChange={(e) => setForm({ ...form, sector: e.target.value })} 
-                        required 
-                      />
+                      <Label>{t('location.sector')}</Label>
+                      <select
+                        className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                        value={form.sector}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            sector: e.target.value,
+                            cell: "",
+                            village: "",
+                          })
+                        }
+                        required
+                        disabled={!form.district}
+                      >
+                        <option value="">{t('location.select_sector')}</option>
+                        {sectorsList.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Cell</Label>
-                      <Input 
-                        className="h-11" 
-                        placeholder="E.g., Ruhunga" 
-                        value={form.cell} 
-                        onChange={(e) => setForm({ ...form, cell: e.target.value })} 
-                        required 
-                      />
+                      <Label>{t('location.cell')}</Label>
+                      <select
+                        className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                        value={form.cell}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            cell: e.target.value,
+                            village: "",
+                          })
+                        }
+                        required
+                        disabled={!form.sector}
+                      >
+                        <option value="">{t('location.select_cell')}</option>
+                        {cellsList.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Village</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        className="h-11 flex-1" 
-                        placeholder="Enter village name" 
-                        value={form.village} 
-                        onChange={(e) => setForm({ ...form, village: e.target.value })} 
-                        required 
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-11 px-4"
-                        onClick={searchChws}
-                        disabled={searchingChws || !form.district || !form.sector || !form.cell || !form.village}
-                      >
-                        <Search className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <Label>{t('location.village')}</Label>
+                    <select
+                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      value={form.village}
+                      onChange={(e) => setForm({ ...form, village: e.target.value })}
+                      required
+                      disabled={!form.cell}
+                    >
+                      <option value="">{t('location.select_village')}</option>
+                      {villagesList.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <Label className="text-emerald-700 font-semibold">{t('assessment.assign_chw')}</Label>
+                    <select
+                      className="flex h-11 w-full rounded-lg border-2 border-emerald-100 bg-emerald-50/30 px-3 py-2 text-sm focus:border-emerald-500 transition-colors"
+                      value={form.chwId}
+                      onChange={(e) => setForm({ ...form, chwId: Number(e.target.value) })}
+                      required
+                    >
+                      <option value="">{t('assessment.select_chw')}</option>
+                      {availableCHWs.map((chw) => (
+                        <option key={chw.id} value={chw.id}>
+                          {chw.name} ({chw.sector}, {chw.cell}, {chw.village})
+                        </option>
+                      ))}
+                    </select>
+                    {loadingCHWs && <p className="text-xs text-muted-foreground animate-pulse">{t('common.loading')}</p>}
+                    {!loadingCHWs && availableCHWs.length === 0 && (
+                      <p className="text-xs text-amber-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" /> {t('assessment.no_chws_found')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -447,7 +605,7 @@ export default function NurseRegisterChild() {
                   type="submit" 
                   className="flex-1 h-12 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                 >
-                  Register Child
+                  {t('assessment.register_button')}
                 </Button>
                 <Button 
                   type="button" 
@@ -455,85 +613,27 @@ export default function NurseRegisterChild() {
                   className="h-12" 
                   onClick={() => navigate("/nurse")}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </form>
-          </div>
-
-          {/* Right: CHW Selection */}
-          <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4 text-blue-900">CHW Assignment</h3>
-
-              {selectedChw ? (
-                <div className="bg-white rounded-lg p-4 border-2 border-emerald-500 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-gray-900">{selectedChw.name}</p>
-                      <p className="text-sm text-gray-600">{selectedChw.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-xs space-y-1 bg-gray-50 rounded p-2">
-                    <p><span className="font-medium">Health Center:</span> {selectedChw.healthCenter.name}</p>
-                    <p><span className="font-medium">Location:</span> {selectedChw.village}, {selectedChw.cell}</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-9 text-sm"
-                    onClick={() => {
-                      setSelectedChw(null);
-                      setForm((prev) => ({ ...prev, chwId: 0 }));
-                    }}
-                  >
-                    Clear Selection
-                  </Button>
-                </div>
-              ) : chws.length > 0 ? (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {chws.map((chw) => (
-                    <button
-                      key={chw.id}
-                      type="button"
-                      onClick={() => handleSelectChw(chw)}
-                      className="w-full text-left bg-white rounded-lg p-3 border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
-                    >
-                      <p className="font-medium text-gray-900 group-hover:text-blue-600">{chw.name}</p>
-                      <p className="text-xs text-gray-500">{chw.email}</p>
-                      <p className="text-xs text-gray-600 mt-1">{chw.healthCenter.name}</p>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg p-4 border border-gray-200 flex flex-col items-center justify-center text-center py-8">
-                  <AlertCircle className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    {searchingChws 
-                      ? "Searching CHWs..." 
-                      : "Enter location details and click Search to find CHWs"}
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
         {/* Registered Children */}
         <div className="bg-card rounded-xl border shadow-sm p-6">
-          <h3 className="text-lg font-semibold mb-4">Registered Children</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('assessment.registered_children')}</h3>
           {loadingChildren ? (
-            <p className="text-muted-foreground">Loading registered children...</p>
+            <p className="text-muted-foreground">{t('common.loading')}</p>
           ) : children.length === 0 ? (
-            <p className="text-muted-foreground">No children registered yet.</p>
+            <p className="text-muted-foreground">{t('assessment.no_children')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     {[
-                      "Child", "DOB", "Gender", "Village", "CHW Provider", "Registered", "Actions"
+                      t('common.child'), t('common.dob'), t('common.gender'), t('location.village'), t('assessment.assign_chw'), t('common.registered', 'Registered'), t('common.actions')
                     ].map((header) => (
                       <th key={header} className="p-3 text-sm font-medium text-muted-foreground">{header}</th>
                     ))}
@@ -544,9 +644,9 @@ export default function NurseRegisterChild() {
                     <tr key={child.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="p-3 text-sm font-medium">{child.name}</td>
                       <td className="p-3 text-sm">{new Date(child.dob).toLocaleDateString()}</td>
-                      <td className="p-3 text-sm">{child.gender === "M" ? "Male" : "Female"}</td>
+                      <td className="p-3 text-sm">{child.gender === "M" ? t('assessment.male') : t('assessment.female')}</td>
                       <td className="p-3 text-sm">{child.village}</td>
-                      <td className="p-3 text-sm">{child.chw?.name || "Unassigned"}</td>
+                      <td className="p-3 text-sm">{child.chw?.name || t('common.not_assigned')}</td>
                       <td className="p-3 text-sm">{new Date(child.registeredAt).toLocaleDateString()}</td>
                       <td className="p-3 text-sm">
                         <div className="flex gap-2">
@@ -581,72 +681,143 @@ export default function NurseRegisterChild() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Child Record</DialogTitle>
+            <DialogTitle>{t('assessment.edit_child_title')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column: Info */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Child Information</h3>
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{t('assessment.child_info')}</h3>
                 <div className="space-y-2">
-                  <Label>Full Name</Label>
+                  <Label>{t('assessment.full_name')}</Label>
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>DOB</Label>
+                    <Label>{t('common.dob')}</Label>
                     <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Gender</Label>
+                    <Label>{t('common.gender')}</Label>
                     <select
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       value={form.gender}
                       onChange={(e) => setForm({ ...form, gender: e.target.value })}
                     >
-                      <option value="M">Male</option>
-                      <option value="F">Female</option>
+                      <option value="M">{t('assessment.male')}</option>
+                      <option value="F">{t('assessment.female')}</option>
                     </select>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Mother Name</Label>
+                  <Label>{t('assessment.mother_name')}</Label>
                   <Input value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} required />
                 </div>
               </div>
 
               {/* Right Column: Location & CHW */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Location & Assignment</h3>
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{t('assessment.location_info')}</h3>
                 <div className="space-y-2">
-                  <Label>District</Label>
-                  <Input value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} required />
+                  <Label>{t('location.district')}</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed"
+                    value={form.district}
+                    disabled
+                    required
+                  >
+                    <option value="Kicukiro">Kicukiro</option>
+                  </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Sector</Label>
-                    <Input value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} required />
+                    <Label>{t('location.sector')}</Label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={form.sector}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          sector: e.target.value,
+                          cell: "",
+                          village: "",
+                        })
+                      }
+                      required
+                      disabled={!form.district}
+                    >
+                      <option value="">{t('location.select_sector')}</option>
+                      {sectorsList.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Cell</Label>
-                    <Input value={form.cell} onChange={(e) => setForm({ ...form, cell: e.target.value })} required />
+                    <Label>{t('location.cell')}</Label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={form.cell}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          cell: e.target.value,
+                          village: "",
+                        })
+                      }
+                      required
+                      disabled={!form.sector}
+                    >
+                      <option value="">{t('location.select_cell')}</option>
+                      {cellsList.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Village</Label>
-                  <div className="flex gap-2">
-                    <Input value={form.village} onChange={(e) => setForm({ ...form, village: e.target.value })} required className="flex-1" />
-                    <Button type="button" variant="outline" size="icon" onClick={searchChws} disabled={searchingChws}>
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Label>{t('location.village')}</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={form.village}
+                    onChange={(e) => setForm({ ...form, village: e.target.value })}
+                    required
+                    disabled={!form.cell}
+                  >
+                    <option value="">{t('location.select_village')}</option>
+                    {villagesList.map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <Label className="text-emerald-700 font-semibold text-xs uppercase tracking-wider">{t('assessment.assign_chw')}</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border-2 border-emerald-100 bg-emerald-50/30 px-3 py-2 text-sm focus:border-emerald-500 transition-colors"
+                    value={form.chwId}
+                    onChange={(e) => setForm({ ...form, chwId: Number(e.target.value) })}
+                    required
+                  >
+                    <option value="">{t('assessment.select_chw')}</option>
+                    {availableCHWs.map((chw) => (
+                      <option key={chw.id} value={chw.id}>
+                        {chw.name} ({chw.village})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
 
             {/* CHW Selection in Modal */}
             <div className="bg-muted/30 p-4 rounded-lg border">
-              <h3 className="font-semibold text-sm mb-3">CHW Assignment</h3>
+              <h3 className="font-semibold text-sm mb-3">{t('assessment.assign_chw')}</h3>
               {selectedChw ? (
                 <div className="flex items-center justify-between bg-white p-3 rounded border border-emerald-200">
                   <div className="flex items-center gap-3">
@@ -657,7 +828,7 @@ export default function NurseRegisterChild() {
                     </div>
                   </div>
                   <Button type="button" variant="ghost" size="sm" onClick={() => { setSelectedChw(null); setForm({ ...form, chwId: 0 }); }}>
-                    Change
+                    {t('common.edit')}
                   </Button>
                 </div>
               ) : chws.length > 0 ? (
@@ -676,16 +847,16 @@ export default function NurseRegisterChild() {
                 </div>
               ) : (
                 <p className="text-xs text-center text-muted-foreground py-2">
-                  {searchingChws ? "Searching..." : "Search village to see available CHWs"}
+                  {searchingChws ? t('common.loading') : t('assessment.search_village_chw', "Search village to see available CHWs")}
                 </p>
               )}
             </div>
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={cancelEdit}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={cancelEdit}>{t('common.cancel')}</Button>
               </DialogClose>
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">Update Record</Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">{t('assessment.update_button')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -695,7 +866,7 @@ export default function NurseRegisterChild() {
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
-        message="Are you sure you want to delete this child record?"
+        message={t('assessment.delete_confirm_msg')}
       />
     </DashboardLayout>
   );

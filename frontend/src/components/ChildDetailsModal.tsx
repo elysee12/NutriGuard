@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X, Calendar, User, MapPin, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/DashboardComponents";
+import { useTranslation } from "react-i18next";
 
 interface ChildProfileData {
   id: number;
@@ -63,6 +64,7 @@ export default function ChildDetailsModal({
   token,
   apiUrl,
 }: ChildDetailsModalProps) {
+  const { t } = useTranslation();
   const [child, setChild] = useState<ChildProfileData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,27 +80,27 @@ export default function ChildDetailsModal({
         });
 
         if (!response.ok) {
-          throw new Error("Failed to load child details");
+          throw new Error(t('assessment.load_failed'));
         }
 
         const data = await response.json();
         setChild(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : t('common.error'));
       } finally {
         setLoading(false);
       }
     };
 
     loadChildDetails();
-  }, [childId, token, apiUrl]);
+  }, [childId, token, apiUrl, t]);
 
   if (!token) return null;
 
   const calculateAge = (dob: string) => {
     const diff = new Date().getTime() - new Date(dob).getTime();
     const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44));
-    return `${months} months`;
+    return `${months} ${t('dashboard.months')}`;
   };
 
   return (
@@ -108,12 +110,12 @@ export default function ChildDetailsModal({
         <div className="sticky top-0 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 flex items-center justify-between border-b">
           <div>
             <h2 className="text-2xl font-bold">{childName}</h2>
-            <p className="text-primary-foreground/80 text-sm">Child Profile & Assessment History</p>
+            <p className="text-primary-foreground/80 text-sm">{t('assessment.child_profile_history')}</p>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-primary-foreground/20 rounded-lg transition-colors"
-            aria-label="Close"
+            aria-label={t('common.cancel')}
           >
             <X className="h-6 w-6" />
           </button>
@@ -124,22 +126,22 @@ export default function ChildDetailsModal({
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader className="h-8 w-8 text-primary animate-spin mb-3" />
-              <p className="text-muted-foreground">Loading child details...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             </div>
           ) : error ? (
             <div className="bg-destructive/10 border border-destructive text-destructive rounded-lg p-4">
-              <p className="font-medium">Error: {error}</p>
+              <p className="font-medium">{t('common.error')}: {error}</p>
             </div>
           ) : child ? (
             <>
               {/* Child Profile Section */}
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20">
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Child Profile</h3>
+                <h3 className="font-display text-lg font-semibold text-foreground mb-4">{t('assessment.child_profile')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="flex items-start gap-3">
                     <User className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-muted-foreground">Name</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('common.name')}</p>
                       <p className="text-foreground font-semibold">{child.name}</p>
                     </div>
                   </div>
@@ -147,24 +149,24 @@ export default function ChildDetailsModal({
                   <div className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('common.dob')}</p>
                       <p className="text-foreground font-semibold">{new Date(child.dob).toLocaleDateString()}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{calculateAge(child.dob)}</p>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Gender</p>
-                    <p className="text-foreground font-semibold">{child.gender === "M" ? "Male" : "Female"}</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">{t('common.gender')}</p>
+                    <p className="text-foreground font-semibold">{child.gender === "M" ? t('assessment.male') : t('assessment.female')}</p>
                   </div>
 
                   <div className="md:col-span-2">
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Mother/Guardian</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">{t('assessment.mother_name')}</p>
                     <p className="text-foreground font-semibold">{child.motherName}</p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Registered</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">{t('common.registered')}</p>
                     <p className="text-foreground font-semibold">
                       {new Date(child.registeredAt).toLocaleDateString()}
                     </p>
@@ -173,7 +175,7 @@ export default function ChildDetailsModal({
                   <div className="flex items-start gap-3 md:col-span-2">
                     <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-muted-foreground">Location</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('admin.location')}</p>
                       <p className="text-foreground font-semibold">
                         {[child.district, child.sector, child.cell, child.village].filter(Boolean).join(" / ")}
                       </p>
@@ -190,7 +192,7 @@ export default function ChildDetailsModal({
 
                   {child.healthCenter && (
                     <div className="md:col-span-2">
-                      <p className="text-sm font-medium text-muted-foreground mb-1">Health Center</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">{t('common.health_center')}</p>
                       <p className="text-foreground font-semibold">{child.healthCenter.name}</p>
                     </div>
                   )}
@@ -200,12 +202,12 @@ export default function ChildDetailsModal({
               {/* Assessment History Section */}
               <div>
                 <h3 className="font-display text-lg font-semibold text-foreground mb-4">
-                  {assessmentId ? "Assessment Details" : `Assessment History (${child.assessments.length})`}
+                  {assessmentId ? t('assessment.assessment_details') : t('assessment.assessment_history', { count: child.assessments.length })}
                 </h3>
 
                 {child.assessments.length === 0 ? (
                   <div className="bg-muted rounded-lg p-8 text-center text-muted-foreground">
-                    No assessments conducted yet.
+                    {t('assessment.no_assessments_yet')}
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-[70vh] overflow-y-auto">
@@ -232,11 +234,11 @@ export default function ChildDetailsModal({
                                   : "bg-warning/10 text-warning"
                               }`}
                             >
-                              {assessment.status}
+                              {assessment.status === 'REVIEWED' ? t('dashboard.reviewed') : t('dashboard.pending')}
                             </span>
                             {assessment.reviewedBy && (
                               <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                                Reviewed: {assessment.reviewedBy}
+                                {t('assessment.reviewed_by', { name: assessment.reviewedBy })}
                               </span>
                             )}
                           </div>
@@ -244,18 +246,18 @@ export default function ChildDetailsModal({
 
                         {/* Anthropometric Section */}
                         <div>
-                          <h4 className="text-sm font-semibold text-foreground mb-3">Anthropometric Measurements</h4>
+                          <h4 className="text-sm font-semibold text-foreground mb-3">{t('assessment.anthropometric_measurements')}</h4>
                           <div className="grid grid-cols-3 gap-3">
                             <div className="bg-muted/40 rounded p-3">
-                              <span className="text-xs text-muted-foreground block">Height</span>
+                              <span className="text-xs text-muted-foreground block">{t('assessment.height_cm')}</span>
                               <p className="font-semibold text-foreground text-lg">{assessment.height} cm</p>
                             </div>
                             <div className="bg-muted/40 rounded p-3">
-                              <span className="text-xs text-muted-foreground block">Weight</span>
+                              <span className="text-xs text-muted-foreground block">{t('assessment.weight_kg')}</span>
                               <p className="font-semibold text-foreground text-lg">{assessment.weight} kg</p>
                             </div>
                             <div className="bg-muted/40 rounded p-3">
-                              <span className="text-xs text-muted-foreground block">MUAC</span>
+                              <span className="text-xs text-muted-foreground block">{t('assessment.muac_mm')}</span>
                               <p className="font-semibold text-foreground text-lg">{assessment.muac} mm</p>
                             </div>
                           </div>
@@ -263,20 +265,20 @@ export default function ChildDetailsModal({
 
                         {/* Sociodemographic Information */}
                         <div>
-                          <h4 className="text-sm font-semibold text-foreground mb-3">Sociodemographic Information</h4>
+                          <h4 className="text-sm font-semibold text-foreground mb-3">{t('assessment.sociodemographic_info')}</h4>
                           <div className="grid grid-cols-2 gap-3 text-sm">
                             <div className="bg-muted/40 rounded p-3">
-                              <span className="text-xs text-muted-foreground">Mother&apos;s Education</span>
-                              <p className="font-medium text-foreground">{assessment.motherEducation || "N/A"}</p>
+                              <span className="text-xs text-muted-foreground">{t('assessment.mother_education')}</span>
+                              <p className="font-medium text-foreground">{assessment.motherEducation || t('common.na')}</p>
                             </div>
                             <div className="bg-muted/40 rounded p-3">
-                              <span className="text-xs text-muted-foreground">Caregiver Occupation</span>
-                              <p className="font-medium text-foreground">{assessment.caregiverOccupation || "N/A"}</p>
+                              <span className="text-xs text-muted-foreground">{t('assessment.caregiver_occupation')}</span>
+                              <p className="font-medium text-foreground">{assessment.caregiverOccupation || t('common.na')}</p>
                             </div>
                             <div className="bg-muted/40 rounded p-3">
-                              <span className="text-xs text-muted-foreground">Both Parents Present</span>
+                              <span className="text-xs text-muted-foreground">{t('assessment.both_parents_present')}</span>
                               <p className={`font-medium ${assessment.hasBothParents ? "text-success" : "text-destructive"}`}>
-                                {assessment.hasBothParents ? "Yes" : "No"}
+                                {assessment.hasBothParents ? t('assessment.yes') : t('assessment.no')}
                               </p>
                             </div>
                           </div>
@@ -284,46 +286,46 @@ export default function ChildDetailsModal({
 
                         {/* Health and Nutrition Practices */}
                         <div>
-                          <h4 className="text-sm font-semibold text-foreground mb-3">Health & Nutrition Practices</h4>
+                          <h4 className="text-sm font-semibold text-foreground mb-3">{t('assessment.health_nutrition_practices')}</h4>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
                             <div className={`rounded p-3 flex items-center gap-2 ${assessment.hasExclusiveBF ? "bg-success/10" : "bg-muted/40"}`}>
                               <div className={`w-3 h-3 rounded-full ${assessment.hasExclusiveBF ? "bg-success" : "bg-muted-foreground"}`} />
-                              <span className="text-foreground">Exclusive Breastfeeding</span>
+                              <span className="text-foreground">{t('assessment.exclusive_breastfeeding')}</span>
                             </div>
                             <div className={`rounded p-3 flex items-center gap-2 ${assessment.hasMinimumMealFrequency ? "bg-success/10" : "bg-muted/40"}`}>
                               <div className={`w-3 h-3 rounded-full ${assessment.hasMinimumMealFrequency ? "bg-success" : "bg-muted-foreground"}`} />
-                              <span className="text-foreground">Min. Meal Frequency</span>
+                              <span className="text-foreground">{t('assessment.min_meal_frequency')}</span>
                             </div>
                             <div className={`rounded p-3 flex items-center gap-2 ${assessment.hasVUP ? "bg-success/10" : "bg-muted/40"}`}>
                               <div className={`w-3 h-3 rounded-full ${assessment.hasVUP ? "bg-success" : "bg-muted-foreground"}`} />
-                              <span className="text-foreground">VUP Beneficiary</span>
+                              <span className="text-foreground">{t('assessment.vup_beneficiary')}</span>
                             </div>
                             <div className={`rounded p-3 flex items-center gap-2 ${!assessment.hasRecentIllness ? "bg-success/10" : "bg-warning/10"}`}>
                               <div className={`w-3 h-3 rounded-full ${!assessment.hasRecentIllness ? "bg-success" : "bg-warning"}`} />
-                              <span className="text-foreground">{assessment.hasRecentIllness ? "Has Recent Illness" : "No Recent Illness"}</span>
+                              <span className="text-foreground">{assessment.hasRecentIllness ? t('assessment.recent_illness_label') : t('assessment.no_recent_illness')}</span>
                             </div>
                             <div className={`rounded p-3 flex items-center gap-2 ${!assessment.hasHouseholdConflict ? "bg-success/10" : "bg-warning/10"}`}>
                               <div className={`w-3 h-3 rounded-full ${!assessment.hasHouseholdConflict ? "bg-success" : "bg-warning"}`} />
-                              <span className="text-foreground">{assessment.hasHouseholdConflict ? "Has Household Conflict" : "No Household Conflict"}</span>
+                              <span className="text-foreground">{assessment.hasHouseholdConflict ? t('assessment.household_conflict_label') : t('assessment.no_household_conflict')}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Water, Sanitation & Hygiene */}
                         <div>
-                          <h4 className="text-sm font-semibold text-foreground mb-3">Water, Sanitation & Hygiene</h4>
+                          <h4 className="text-sm font-semibold text-foreground mb-3">{t('assessment.water_sanitation_hygiene')}</h4>
                           <div className="grid grid-cols-3 gap-2 text-sm">
                             <div className={`rounded p-3 flex items-center gap-2 ${assessment.hasSafeWater ? "bg-success/10" : "bg-destructive/10"}`}>
                               <div className={`w-3 h-3 rounded-full ${assessment.hasSafeWater ? "bg-success" : "bg-destructive"}`} />
-                              <span className="text-foreground">Safe Water</span>
+                              <span className="text-foreground">{t('assessment.safe_water')}</span>
                             </div>
                             <div className={`rounded p-3 flex items-center gap-2 ${assessment.hasHandwashingFacility ? "bg-success/10" : "bg-destructive/10"}`}>
                               <div className={`w-3 h-3 rounded-full ${assessment.hasHandwashingFacility ? "bg-success" : "bg-destructive"}`} />
-                              <span className="text-foreground">Handwashing</span>
+                              <span className="text-foreground">{t('assessment.handwashing')}</span>
                             </div>
                             <div className={`rounded p-3 flex items-center gap-2 ${assessment.hasToilet ? "bg-success/10" : "bg-destructive/10"}`}>
                               <div className={`w-3 h-3 rounded-full ${assessment.hasToilet ? "bg-success" : "bg-destructive"}`} />
-                              <span className="text-foreground">Toilet Access</span>
+                              <span className="text-foreground">{t('assessment.toilet_access')}</span>
                             </div>
                           </div>
                         </div>
@@ -331,18 +333,18 @@ export default function ChildDetailsModal({
                         {/* ML Prediction & Clinical Assessment */}
                         {assessment.prediction && (
                           <div>
-                            <h4 className="text-sm font-semibold text-foreground mb-3">ML Prediction & Clinical Assessment</h4>
+                            <h4 className="text-sm font-semibold text-foreground mb-3">{t('assessment.ml_prediction_clinical')}</h4>
                             <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 space-y-3 border border-primary/20">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <span className="text-sm text-muted-foreground">Prediction Result:</span>
+                                  <span className="text-sm text-muted-foreground">{t('assessment.prediction_result')}:</span>
                                   <p className="font-semibold text-foreground text-lg">{assessment.prediction.result}</p>
                                 </div>
                                 <RiskBadge level={assessment.prediction.riskLevel} />
                               </div>
 
                               <div>
-                                <span className="text-sm text-muted-foreground block mb-2">Risk Score</span>
+                                <span className="text-sm text-muted-foreground block mb-2">{t('dashboard.score')}</span>
                                 <div className="flex items-center gap-3">
                                   <div className="flex-1 bg-muted rounded-full h-3">
                                     <div
@@ -363,15 +365,17 @@ export default function ChildDetailsModal({
                               </div>
 
                               <div>
-                                <span className="text-sm font-medium text-muted-foreground block mb-2">Clinical Recommendation:</span>
+                                <span className="text-sm font-medium text-muted-foreground block mb-2">{t('assessment.clinical_recommendation')}:</span>
                                 <p className="text-foreground bg-white/50 rounded p-3 border border-primary/10">
                                   {assessment.prediction.recommendation}
                                 </p>
                               </div>
 
                               <div className="text-xs text-muted-foreground pt-2 border-t border-primary/20">
-                                Prediction generated: {new Date(assessment.prediction.createdAt).toLocaleDateString()} at{" "}
-                                {new Date(assessment.prediction.createdAt).toLocaleTimeString()}
+                                {t('assessment.prediction_generated', {
+                                  date: new Date(assessment.prediction.createdAt).toLocaleDateString(),
+                                  time: new Date(assessment.prediction.createdAt).toLocaleTimeString()
+                                })}
                               </div>
                             </div>
                           </div>
@@ -388,7 +392,7 @@ export default function ChildDetailsModal({
         {/* Footer */}
         <div className="sticky bottom-0 bg-muted/50 border-t p-4 flex justify-end">
           <Button onClick={onClose} variant="outline">
-            Close
+            {t('assessment.close')}
           </Button>
         </div>
       </div>

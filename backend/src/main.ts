@@ -14,7 +14,11 @@ async function bootstrap() {
 
   // 2. Kosora CORS (Ibi nibyo bikemura ya error y'umutuku muri Browser)
   app.enableCors({
-    origin: '*', // Emerera ama-requests yose (Professional for testing)
+    origin: [
+      'https://nutriguard-frontend.onrender.com',
+      'http://localhost:5173', // Local Vite development
+      'http://localhost:8080', // Alternative local port
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

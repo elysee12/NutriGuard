@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PendingReview {
   id: number;
@@ -18,6 +19,7 @@ interface PendingReview {
 export default function NurseDashboard() {
   const navigate = useNavigate();
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const center = user?.healthCenter || "";
@@ -52,39 +54,39 @@ export default function NurseDashboard() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-emerald-800">Welcome, {user?.name}</h2>
-          <p className="text-muted-foreground">We're glad to have you back.</p>
+          <h2 className="text-2xl font-bold text-emerald-800">{t('common.welcome')}, {user?.name}</h2>
+          <p className="text-muted-foreground">{t('common.welcome_back_desc')}</p>
         </div>
 
         <PageHeader
-          title="Nurse Dashboard"
-          description={center ? `${center} — Monitoring & Review` : "Monitoring & Review"}
+          title={t('nav.dashboard')}
+          description={center ? `${center} — ${t('common.monitoring_review')}` : t('common.monitoring_review')}
           actions={
             <Button onClick={() => navigate("/nurse/register-child")} className="font-semibold">
               <Baby className="h-4 w-4 mr-2" />
-              Register Child
+              {t('nav.register_child')}
             </Button>
           }
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="CHWs Supervised" value={stats?.totalCHWs || 0} icon={<Users className="h-6 w-6" />} />
-          <StatCard title="Children Registered" value={stats?.totalChildren || 0} icon={<Baby className="h-6 w-6" />} />
-          <StatCard title="Pending Reviews" value={stats?.pendingReviews || 0} icon={<ClipboardList className="h-6 w-6" />} changeType="negative" />
-          <StatCard title="High Risk Cases" value={stats?.highRiskCount || 0} icon={<AlertTriangle className="h-6 w-6" />} />
+          <StatCard title={t('dashboard.chws_supervised')} value={stats?.totalCHWs || 0} icon={<Users className="h-6 w-6" />} />
+          <StatCard title={t('dashboard.children_registered')} value={stats?.totalChildren || 0} icon={<Baby className="h-6 w-6" />} />
+          <StatCard title={t('dashboard.pending_reviews')} value={stats?.pendingReviews || 0} icon={<ClipboardList className="h-6 w-6" />} changeType="negative" />
+          <StatCard title={t('dashboard.high_risk_cases')} value={stats?.highRiskCount || 0} icon={<AlertTriangle className="h-6 w-6" />} />
         </div>
 
         {/* Pending Reviews */}
         <div className="bg-card rounded-xl border shadow-sm">
           <div className="p-6 border-b flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-card-foreground">Pending Reviews</h2>
-            <Button variant="outline" size="sm" onClick={() => navigate("/nurse/assessments")}>View All</Button>
+            <h2 className="font-display text-lg font-semibold text-card-foreground">{t('dashboard.pending_reviews')}</h2>
+            <Button variant="outline" size="sm" onClick={() => navigate("/nurse/assessments")}>{t('dashboard.view_all')}</Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  {["Child", "Submitted by", "Date", "ML Prediction", "Risk", "Action"].map((h) => (
+                  {[t('common.name'), t('dashboard.submitted_by'), t('common.date'), t('dashboard.ml_prediction'), t('dashboard.risk_level'), t('common.actions')].map((h) => (
                     <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
                   ))}
                 </tr>
@@ -98,13 +100,13 @@ export default function NurseDashboard() {
                     <td className="p-4 text-sm font-medium text-foreground">{r.prediction?.result} ({r.prediction?.riskScore}%)</td>
                     <td className="p-4"><RiskBadge level={r.prediction?.riskLevel || "low"} /></td>
                     <td className="p-4">
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/nurse/assessments/${r.id}`)}>Review</Button>
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/nurse/assessments/${r.id}`)}>{t('dashboard.review')}</Button>
                     </td>
                   </tr>
                 ))}
                 {pendingReviews.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">No pending reviews found.</td>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">{t('dashboard.no_pending_reviews')}</td>
                   </tr>
                 )}
               </tbody>

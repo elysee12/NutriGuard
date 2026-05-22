@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface AssessmentRecord {
   id: number;
@@ -32,6 +33,7 @@ interface AssessmentRecord {
 export default function NurseAssessments() {
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [assessments, setAssessments] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState("");
@@ -53,7 +55,7 @@ export default function NurseAssessments() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
-          throw new Error('Unable to load assessments');
+          throw new Error(t('assessment.load_failed', 'Unable to load assessments'));
         }
         const data = await response.json();
         setAssessments(data);
@@ -66,7 +68,7 @@ export default function NurseAssessments() {
     };
 
     loadAssessments();
-  }, [API_URL, token]);
+  }, [API_URL, token, t]);
 
   const sectors = useMemo(
     () => Array.from(new Set(assessments.map((a) => a.child.sector).filter(Boolean as any))),
@@ -108,11 +110,11 @@ export default function NurseAssessments() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
         <PageHeader
-          title="Review Assessments"
-          description="Review submitted forms and ML predictions"
+          title={t('assessment.review_assessments')}
+          description={t('assessment.review_assessments_desc', "Review submitted forms and ML predictions")}
           actions={
             <Button onClick={() => navigate("/chw/assessments")} className="font-semibold">
-              Conduct Assessment
+              {t('assessment.conduct_assessment')}
             </Button>
           }
         />
@@ -120,15 +122,15 @@ export default function NurseAssessments() {
         <div className="bg-card rounded-xl border shadow-sm p-4 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-2">
-              <Label>From</Label>
+              <Label>{t('assessment.from')}</Label>
               <Input type="date" className="h-10" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>To</Label>
+              <Label>{t('assessment.to')}</Label>
               <Input type="date" className="h-10" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </div>
             <div className="space-y-2 md:col-span-1">
-              <Label>Sector</Label>
+              <Label>{t('location.sector')}</Label>
               <select
                 className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={sector}
@@ -138,14 +140,14 @@ export default function NurseAssessments() {
                   setVillage("");
                 }}
               >
-                <option value="">All</option>
+                <option value="">{t('assessment.all')}</option>
                 {sectors.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Cell</Label>
+              <Label>{t('location.cell')}</Label>
               <select
                 className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={cell}
@@ -154,20 +156,20 @@ export default function NurseAssessments() {
                   setVillage("");
                 }}
               >
-                <option value="">All</option>
+                <option value="">{t('assessment.all')}</option>
                 {cells.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Village</Label>
+              <Label>{t('location.village')}</Label>
               <select
                 className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 value={village}
                 onChange={(e) => setVillage(e.target.value)}
               >
-                <option value="">All</option>
+                <option value="">{t('assessment.all')}</option>
                 {villages.map((v) => (
                   <option key={v} value={v}>{v}</option>
                 ))}
@@ -180,7 +182,7 @@ export default function NurseAssessments() {
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
-                {["Child", "CHW", "Date", "H(cm)", "W(kg)", "MUAC", "Prediction", "Risk", "Status", ""].map((h) => (
+                {[t('common.child'), "CHW", t('common.date'), `${t('assessment.height_cm')} (cm)`, `${t('assessment.weight_kg')} (kg)`, t('assessment.muac_mm'), t('dashboard.ml_prediction'), t('dashboard.risk_level'), t('common.status'), ""].map((h) => (
                   <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -188,25 +190,27 @@ export default function NurseAssessments() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-muted-foreground">Loading assessments…</td>
+                  <td colSpan={10} className="p-8 text-center text-muted-foreground">{t('common.loading')}</td>
                 </tr>
               ) : filteredAssessments.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-muted-foreground">No assessments found.</td>
+                  <td colSpan={10} className="p-8 text-center text-muted-foreground">{t('dashboard.no_assessments')}</td>
                 </tr>
               ) : (
                 filteredAssessments.map((a) => (
                   <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="p-4 text-sm font-medium text-foreground">{a.child.name}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{a.chw?.name || 'Unknown'}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{a.chw?.name || t('admin.unknown_user')}</td>
                     <td className="p-4 text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString()}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.height}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.weight}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.muac}</td>
-                    <td className="p-4 text-sm font-medium">{a.prediction?.result || 'Pending'}</td>
+                    <td className="p-4 text-sm font-medium">{a.prediction?.result || t('dashboard.pending')}</td>
                     <td className="p-4"><RiskBadge level={a.prediction?.riskLevel || 'low'} /></td>
                     <td className="p-4">
-                      <span className={`text-sm font-medium ${a.status === 'REVIEWED' ? 'text-success' : 'text-warning'}`}>{a.status}</span>
+                      <span className={`text-sm font-medium ${a.status === 'REVIEWED' ? 'text-success' : 'text-warning'}`}>
+                        {a.status === 'REVIEWED' ? t('dashboard.reviewed') : t('dashboard.pending')}
+                      </span>
                     </td>
                     <td className="p-4">
                       <Button
@@ -220,7 +224,7 @@ export default function NurseAssessments() {
                         className="flex items-center gap-1"
                       >
                         <Eye className="h-4 w-4" />
-                        Details
+                        {t('dashboard.details')}
                       </Button>
                     </td>
                   </tr>

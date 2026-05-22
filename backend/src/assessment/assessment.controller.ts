@@ -15,13 +15,13 @@ export class AssessmentController {
   }
 
   @Get()
-  findAll() {
-    return this.assessmentService.findAll();
+  findAll(@Req() req) {
+    return this.assessmentService.findAll(req.user);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.assessmentService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    return this.assessmentService.findOne(id, req.user);
   }
 
   @Patch(':id/review')

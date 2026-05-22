@@ -8,12 +8,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, Heart, Shield, Stethoscope, Users } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 import { API_URL } from "@/lib/api";
-
-const roles: { value: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
-  { value: "admin", label: "Admin", icon: <Shield className="h-5 w-5" />, desc: "System administrator" },
-  { value: "nurse", label: "Nurse", icon: <Stethoscope className="h-5 w-5" />, desc: "Health center staff" },
-  { value: "chw", label: "CHW", icon: <Users className="h-5 w-5" />, desc: "Community health worker" },
-];
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 // health centers in Kicukiro district (fallback)
 const chwLocationConfig = {
@@ -103,13 +99,18 @@ const chwLocationConfig = {
   }
 };
 
-const staticHealthCenters = Object.keys(chwLocationConfig);
-
 const district = "Kicukiro";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
+
+  const roles: { value: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
+    { value: "admin", label: "Admin", icon: <Shield className="h-5 w-5" />, desc: "System administrator" },
+    { value: "nurse", label: "Nurse", icon: <Stethoscope className="h-5 w-5" />, desc: "Health center staff" },
+    { value: "chw", label: "CHW", icon: <Users className="h-5 w-5" />, desc: "Community health worker" },
+  ];
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -120,6 +121,7 @@ export default function RegisterPage() {
   const [healthCenterId, setHealthCenterId] = useState<number | string>("");
   const [loadingCenters, setLoadingCenters] = useState(false);
   const [healthCenterError, setHealthCenterError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [sector, setSector] = useState("");
   const [cell, setCell] = useState("");
   const [village, setVillage] = useState("");
@@ -210,6 +212,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
@@ -244,11 +247,17 @@ export default function RegisterPage() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
+      <div className="absolute top-8 right-8 z-50">
+        <LanguageSelector />
+      </div>
+      
       {/* Left visual panel from login, reuse layout */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden flex-col justify-between p-12">
         <div className="absolute inset-0 opacity-10">
@@ -260,22 +269,22 @@ export default function RegisterPage() {
             <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
               <img src={logo} alt="NutriGuard logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="text-primary-foreground font-display text-xl font-bold">NutriGuard</span>
+            <span className="text-primary-foreground font-display text-xl font-bold">{t('home.title')}</span>
           </div>
         </div>
         <div className="relative z-10">
           <h1 className="text-primary-foreground font-display text-4xl font-bold leading-tight mb-4">
-            Early Detection of<br />Stunting in Children
+            {t('home.hero_title').split(' ').slice(0, 3).join(' ')}<br />{t('home.hero_title').split(' ').slice(3).join(' ')}
           </h1>
           <p className="text-primary-foreground/70 text-lg max-w-md">
-            ML-powered platform helping Rwanda's healthcare workers identify and prevent childhood stunting through data-driven assessments.
+            {t('home.subtitle')}
           </p>
         </div>
         <div className="relative z-10 flex gap-8">
           {[
-            { n: "12,450+", l: "Children Screened" },
-            { n: "340", l: "Health Workers" },
-            { n: "95%", l: "Detection Rate" },
+            { n: "12,450+", l: t('home.stats_children') },
+            { n: "340", l: t('home.stats_chw') },
+            { n: "95%", l: t('home.stats_detection') },
           ].map((s) => (
             <div key={s.l}>
               <div className="text-primary-foreground font-display text-2xl font-bold">{s.n}</div>
@@ -292,15 +301,15 @@ export default function RegisterPage() {
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
               <img src={logo} alt="NutriGuard logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="font-display text-xl font-bold text-foreground">NutriGuard</span>
+            <span className="font-display text-xl font-bold text-foreground">{t('home.title')}</span>
           </div>
 
-          <h2 className="font-display text-2xl font-bold text-foreground mb-1">Request Access</h2>
-          <p className="text-muted-foreground mb-8">Fill in your details to request an account</p>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-1">{t('auth.create_account')}</h2>
+          <p className="text-muted-foreground mb-8">{t('auth.request_access_desc')}</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t('auth.full_name')}</Label>
               <Input
                 id="name"
                 type="text"
@@ -312,7 +321,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email_address')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -324,7 +333,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -345,28 +354,30 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Role selector same as login */}
-            <div className="grid grid-cols-3 gap-3">
-              {roles.map((r) => (
-                <button
-                  key={r.value}
-                  type="button"
-                  onClick={() => setSelectedRole(r.value)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    selectedRole === r.value
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/30"
-                  }`}
-                >
-                  {r.icon}
-                  <span className="text-sm font-medium">{r.label}</span>
-                </button>
-              ))}
+            <div className="space-y-3">
+              <Label>{t('auth.select_role')}</Label>
+              <div className="grid grid-cols-3 gap-3">
+                {roles.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => setSelectedRole(r.value)}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                      selectedRole === r.value
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    {r.icon}
+                    <span className="text-sm font-medium">{r.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {selectedRole === "nurse" && (
               <div className="space-y-2">
-                <Label htmlFor="healthCenter">Health Center</Label>
+                <Label htmlFor="healthCenter">{t('common.health_center')}</Label>
                 <select
                   id="healthCenter"
                   className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
@@ -379,13 +390,13 @@ export default function RegisterPage() {
                       <option key={hc.id} value={hc.id}>{hc.name}</option>
                     ))
                   ) : (
-                    <option value="">No health centers available</option>
+                    <option value="">{t('common.no_centers')}</option>
                   )}
                 </select>
                 {healthCenterError ? (
                   <p className="text-xs text-destructive">{healthCenterError}</p>
                 ) : loadingCenters ? (
-                  <p className="text-xs text-muted-foreground">Loading health centers…</p>
+                  <p className="text-xs text-muted-foreground">{t('common.loading')}</p>
                 ) : null}
               </div>
             )}
@@ -393,64 +404,95 @@ export default function RegisterPage() {
             {selectedRole === "chw" && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>District</Label>
-                  <Input className="h-12 bg-muted/50" value={district} disabled />
+                  <Label>{t('location.district')}</Label>
+                  <Input className="h-12 bg-muted cursor-not-allowed" value="Kicukiro" disabled />
                 </div>
                 <div className="space-y-2">
-                  <Label>Sector</Label>
+                  <Label>{t('location.sector')}</Label>
                   <select
                     className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                     value={sector}
                     onChange={(e) => setSector(e.target.value)}
                     required
                   >
+                    <option value="">{t('location.select_sector')}</option>
                     {Object.keys(chwLocationConfig).map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Cell</Label>
+                  <Label>{t('location.cell')}</Label>
                   <select
                     className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                     value={cell}
                     onChange={(e) => setCell(e.target.value)}
                     required
+                    disabled={!sector}
                   >
+                    <option value="">{t('location.select_cell')}</option>
                     {(chwLocationConfig[sector as keyof typeof chwLocationConfig]?.cells || []).map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Village</Label>
+                  <Label>{t('location.village')}</Label>
                   <select
                     className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                     value={village}
                     onChange={(e) => setVillage(e.target.value)}
                     required
+                    disabled={!cell}
                   >
+                    <option value="">{t('location.select_village')}</option>
                     {(chwLocationConfig[sector as keyof typeof chwLocationConfig]?.villages[cell as keyof any] || []).map((v: string) => (
                       <option key={v} value={v}>{v}</option>
                     ))}
                   </select>
                 </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="chwHealthCenter">{t('common.health_center')}</Label>
+                  <select
+                    id="chwHealthCenter"
+                    className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    value={healthCenterId}
+                    onChange={(e) => setHealthCenterId(e.target.value)}
+                    required
+                  >
+                    {healthCenters.length > 0 ? (
+                      healthCenters.map((hc) => (
+                        <option key={hc.id} value={hc.id}>{hc.name}</option>
+                      ))
+                    ) : (
+                      <option value="">{t('common.no_centers')}</option>
+                    )}
+                  </select>
+                  {healthCenterError ? (
+                    <p className="text-xs text-destructive">{healthCenterError}</p>
+                  ) : loadingCenters ? (
+                    <p className="text-xs text-muted-foreground">{t('common.loading')}</p>
+                  ) : null}
+                </div>
               </div>
             )}
 
-            <Button type="submit" className="w-full h-12 text-base font-semibold">
-              Submit Request
+            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={submitting}>
+              {submitting ? t('common.loading') : t('auth.request_button')}
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <span
-                className="text-primary font-medium cursor-pointer hover:underline"
-                onClick={() => navigate("/")}
-              >
-                Sign in
+            <div className="text-center">
+              <span className="text-sm text-muted-foreground">
+                {t('auth.already_have_account')}{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="text-primary font-bold hover:underline"
+                >
+                  {t('auth.back_to_login')}
+                </button>
               </span>
-            </p>
+            </div>
           </form>
         </div>
       </div>

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, ShieldAlert } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { useTranslation } from "react-i18next";
 
 interface User {
   id: number;
@@ -35,6 +36,7 @@ interface HealthCenter {
 export default function AdminUsers() {
   const { token } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [healthCenters, setHealthCenters] = useState<HealthCenter[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,18 +107,18 @@ export default function AdminUsers() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update user status');
+        throw new Error(data.message || t('admin.update_failed'));
       }
 
       setUsers((prev) => prev.map((user) => (user.id === userId ? data : user)));
       toast({
-        title: `User ${status === 'APPROVED' ? 'approved' : 'rejected'}`,
-        description: `The user request has been ${status === 'APPROVED' ? 'approved' : 'rejected'}.`,
+        title: status === 'APPROVED' ? t('admin.approve') : t('admin.reject'),
+        description: t('admin.user_updated_desc'),
       });
     } catch (error: any) {
       toast({
-        title: 'Action failed',
-        description: error?.message || 'Unable to update user status.',
+        title: t('common.error'),
+        description: error?.message || t('admin.update_failed'),
         variant: 'destructive',
       });
     } finally {
@@ -172,19 +174,19 @@ export default function AdminUsers() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update user');
+        throw new Error(data.message || t('admin.update_failed'));
       }
 
       setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? data : u)));
       setIsEditDialogOpen(false);
       toast({
-        title: "User updated",
-        description: "User information has been updated successfully.",
+        title: t('admin.user_updated'),
+        description: t('admin.user_updated_desc'),
       });
     } catch (error: any) {
       toast({
-        title: "Update failed",
-        description: error.message || "Unable to update user information.",
+        title: t('admin.update_failed'),
+        description: error.message || t('admin.update_failed'),
         variant: "destructive",
       });
     } finally {
@@ -204,18 +206,18 @@ export default function AdminUsers() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to delete user');
+        throw new Error(data.message || t('admin.delete_failed'));
       }
 
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete));
       toast({
-        title: "User deleted",
-        description: "The user account has been removed.",
+        title: t('admin.user_deleted'),
+        description: t('admin.user_deleted_desc'),
       });
     } catch (error: any) {
       toast({
-        title: "Delete failed",
-        description: error.message || "Unable to delete user.",
+        title: t('admin.delete_failed'),
+        description: error.message || t('admin.delete_failed'),
         variant: "destructive",
       });
     } finally {
@@ -233,18 +235,18 @@ export default function AdminUsers() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
-        <PageHeader title="User Management" description="Approve, reject, and manage user accounts" />
+        <PageHeader title={t('admin.user_management_title')} description={t('admin.user_management_desc')} />
 
         {loading ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">Loading users…</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.loading')}</div>
         ) : users.length === 0 ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">No users found.</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.no_results')}</div>
         ) : (
           <div className="bg-card rounded-xl border shadow-sm overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  {["Name", "Email", "Role", "Status", "Health Center", "Actions"].map((h) => (
+                  {[t('common.name'), t('common.email'), t('common.role'), t('common.status'), t('common.health_center'), t('common.actions')].map((h) => (
                     <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
                   ))}
                 </tr>
@@ -272,7 +274,7 @@ export default function AdminUsers() {
                         {u.status}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-muted-foreground">{u.healthCenter?.name || 'N/A'}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{u.healthCenter?.name || t('common.na')}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         {u.status === 'PENDING' && (
@@ -283,7 +285,7 @@ export default function AdminUsers() {
                               disabled={submittingUserId === u.id}
                               onClick={() => handleStatusChange(u.id, 'APPROVED')}
                             >
-                              Approve
+                              {t('admin.approve')}
                             </Button>
                             <Button
                               size="sm"
@@ -292,7 +294,7 @@ export default function AdminUsers() {
                               disabled={submittingUserId === u.id}
                               onClick={() => handleStatusChange(u.id, 'REJECTED')}
                             >
-                              Reject
+                              {t('admin.reject')}
                             </Button>
                           </>
                         )}
@@ -327,12 +329,12 @@ export default function AdminUsers() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit User Profile</DialogTitle>
+            <DialogTitle>{t('admin.edit_user')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Full Name</Label>
+                <Label htmlFor="edit-name">{t('admin.full_name')}</Label>
                 <Input
                   id="edit-name"
                   value={editForm.name}
@@ -341,7 +343,7 @@ export default function AdminUsers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-email">Email Address</Label>
+                <Label htmlFor="edit-email">{t('admin.email_address')}</Label>
                 <Input
                   id="edit-email"
                   type="email"
@@ -354,32 +356,32 @@ export default function AdminUsers() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>User Role</Label>
+                <Label>{t('admin.user_role')}</Label>
                 <Select
                   value={editForm.role}
                   onValueChange={(v) => setEditForm({ ...editForm, role: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder={t('admin.select_role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ADMIN">Administrator</SelectItem>
-                    <SelectItem value="NURSE">Nurse</SelectItem>
-                    <SelectItem value="CHW">CHW Worker</SelectItem>
+                    <SelectItem value="ADMIN">{t('admin.administrator')}</SelectItem>
+                    <SelectItem value="NURSE">{t('admin.nurse')}</SelectItem>
+                    <SelectItem value="CHW">{t('admin.chw_worker')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Health Center</Label>
+                <Label>{t('common.health_center')}</Label>
                 <Select
                   value={editForm.healthCenterId}
                   onValueChange={(v) => setEditForm({ ...editForm, healthCenterId: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select center" />
+                    <SelectValue placeholder={t('admin.select_center')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No Center Assigned</SelectItem>
+                    <SelectItem value="none">{t('admin.no_center_assigned')}</SelectItem>
                     {healthCenters.map((hc) => (
                       <SelectItem key={hc.id} value={hc.id.toString()}>
                         {hc.name}
@@ -392,7 +394,7 @@ export default function AdminUsers() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-district">District</Label>
+                <Label htmlFor="edit-district">{t('location.district')}</Label>
                 <Input
                   id="edit-district"
                   value={editForm.district}
@@ -400,7 +402,7 @@ export default function AdminUsers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-sector">Sector</Label>
+                <Label htmlFor="edit-sector">{t('location.sector')}</Label>
                 <Input
                   id="edit-sector"
                   value={editForm.sector}
@@ -411,7 +413,7 @@ export default function AdminUsers() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-cell">Cell</Label>
+                <Label htmlFor="edit-cell">{t('location.cell')}</Label>
                 <Input
                   id="edit-cell"
                   value={editForm.cell}
@@ -419,7 +421,7 @@ export default function AdminUsers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-village">Village</Label>
+                <Label htmlFor="edit-village">{t('location.village')}</Label>
                 <Input
                   id="edit-village"
                   value={editForm.village}
@@ -430,10 +432,10 @@ export default function AdminUsers() {
 
             <DialogFooter className="pt-4">
               <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
+                <Button type="button" variant="outline">{t('common.cancel')}</Button>
               </DialogClose>
               <Button type="submit" disabled={updating}>
-                {updating ? "Saving Changes..." : "Save Changes"}
+                {updating ? t('admin.saving_changes') : t('admin.save_changes')}
               </Button>
             </DialogFooter>
           </form>
@@ -444,7 +446,7 @@ export default function AdminUsers() {
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDeleteUser}
-        message="Are you sure you want to delete this user? This action cannot be undone."
+        message={t('admin.delete_user_confirm')}
       />
     </DashboardLayout>
   );

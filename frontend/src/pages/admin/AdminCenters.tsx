@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface HealthCenter {
   id: number;
@@ -19,6 +20,7 @@ interface HealthCenter {
 
 export default function AdminCenters() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [centers, setCenters] = useState<HealthCenter[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -87,17 +89,17 @@ export default function AdminCenters() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Unable to add health center');
+        throw new Error(data.message || t('admin.update_failed'));
       }
 
-      toast.success('Health center added successfully.');
+      toast.success(t('admin.center_added'));
       setIsDialogOpen(false);
       setNewCenterName("");
       setNewCenterLocation("");
       await fetchCenters();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Failed to add health center');
+      toast.error(error.message || t('admin.update_failed'));
     } finally {
       setSaving(false);
     }
@@ -127,7 +129,7 @@ export default function AdminCenters() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Unable to update health center');
+        throw new Error(data.message || t('admin.update_failed'));
       }
 
       const updatedCenter = await response.json();
@@ -136,11 +138,11 @@ export default function AdminCenters() {
           ? { ...center, ...updatedCenter, _count: updatedCenter._count ?? center._count }
           : center,
       ));
-      toast.success('Health center updated successfully.');
+      toast.success(t('admin.center_updated'));
       closeEditModal();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Failed to update health center');
+      toast.error(error.message || t('admin.update_failed'));
     } finally {
       setUpdating(false);
     }
@@ -148,7 +150,7 @@ export default function AdminCenters() {
 
   const handleDeleteCenter = async (id: number) => {
     if (!token) return;
-    const shouldDelete = window.confirm('Delete this health center? This action cannot be undone.');
+    const shouldDelete = window.confirm(t('common.confirm_delete'));
     if (!shouldDelete) return;
 
     setDeleteLoadingId(id);
@@ -162,14 +164,14 @@ export default function AdminCenters() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Unable to delete health center');
+        throw new Error(data.message || t('admin.delete_failed'));
       }
 
       setCenters((prev) => prev.filter((center) => center.id !== id));
-      toast.success('Health center deleted successfully.');
+      toast.success(t('admin.center_deleted'));
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Failed to delete health center');
+      toast.error(error.message || t('admin.delete_failed'));
     } finally {
       setDeleteLoadingId(null);
     }
@@ -181,27 +183,27 @@ export default function AdminCenters() {
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <PageHeader
-              title="Health Centers"
-              description="Manage health centers and assignments"
+              title={t('admin.health_centers_title')}
+              description={t('admin.health_centers_desc')}
             />
           </div>
           <div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" /> Add Center
+                  <Plus className="h-4 w-4 mr-2" /> {t('admin.add_center')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>Add Health Center</DialogTitle>
+                  <DialogTitle>{t('admin.add_center')}</DialogTitle>
                   <DialogDescription>
-                    Enter the name and location of the new health center.
+                    {t('admin.add_center_desc')}
                   </DialogDescription>
                 </DialogHeader>
                 <form className="grid gap-4 pt-4" onSubmit={handleCreateCenter}>
                   <div className="space-y-2">
-                    <Label htmlFor="center-name">Center Name</Label>
+                    <Label htmlFor="center-name">{t('admin.center_name')}</Label>
                     <Input
                       id="center-name"
                       value={newCenterName}
@@ -211,7 +213,7 @@ export default function AdminCenters() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="center-location">Location</Label>
+                    <Label htmlFor="center-location">{t('admin.location')}</Label>
                     <Input
                       id="center-location"
                       value={newCenterLocation}
@@ -222,10 +224,10 @@ export default function AdminCenters() {
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
                     <DialogClose asChild>
-                      <Button variant="outline" type="button">Cancel</Button>
+                      <Button variant="outline" type="button">{t('common.cancel')}</Button>
                     </DialogClose>
                     <Button type="submit" disabled={saving}>
-                      {saving ? 'Saving...' : 'Save Center'}
+                      {saving ? t('common.saving') : t('admin.save_center')}
                     </Button>
                   </div>
                 </form>
@@ -240,14 +242,14 @@ export default function AdminCenters() {
             }}>
               <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>Edit Health Center</DialogTitle>
+                  <DialogTitle>{t('admin.edit_center')}</DialogTitle>
                   <DialogDescription>
-                    Update the health center information and save your changes.
+                    {t('admin.edit_center_desc')}
                   </DialogDescription>
                 </DialogHeader>
                 <form className="grid gap-4 pt-4" onSubmit={handleUpdateCenter}>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-center-name">Center Name</Label>
+                    <Label htmlFor="edit-center-name">{t('admin.center_name')}</Label>
                     <Input
                       id="edit-center-name"
                       value={editCenterName}
@@ -257,7 +259,7 @@ export default function AdminCenters() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-center-location">Location</Label>
+                    <Label htmlFor="edit-center-location">{t('admin.location')}</Label>
                     <Input
                       id="edit-center-location"
                       value={editCenterLocation}
@@ -268,10 +270,10 @@ export default function AdminCenters() {
                   </div>
                   <div className="flex justify-between gap-2 pt-4">
                     <DialogClose asChild>
-                      <Button variant="outline" type="button">Cancel</Button>
+                      <Button variant="outline" type="button">{t('common.cancel')}</Button>
                     </DialogClose>
                     <Button type="submit" disabled={updating || !selectedCenter}>
-                      {updating ? 'Saving...' : 'Save changes'}
+                      {updating ? t('common.saving') : t('common.save')}
                     </Button>
                   </div>
                 </form>
@@ -281,9 +283,9 @@ export default function AdminCenters() {
         </div>
 
         {loading ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">Loading health centers…</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.loading')}</div>
         ) : centers.length === 0 ? (
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">No health centers available.</div>
+          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.no_results')}</div>
         ) : (
           <div className="grid gap-4">
             {centers.map((center) => (
@@ -303,7 +305,7 @@ export default function AdminCenters() {
                         variant="outline"
                         onClick={() => openEditModal(center)}
                       >
-                        Edit
+                        {t('common.edit')}
                       </Button>
                       <Button
                         size="sm"
@@ -312,18 +314,18 @@ export default function AdminCenters() {
                         onClick={() => handleDeleteCenter(center.id)}
                         disabled={deleteLoadingId === center.id}
                       >
-                        {deleteLoadingId === center.id ? 'Deleting…' : 'Delete'}
+                        {deleteLoadingId === center.id ? t('common.deleting') : t('common.delete')}
                       </Button>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                   <div>
-                    <p className="text-sm text-muted-foreground">Users</p>
+                    <p className="text-sm text-muted-foreground">{t('admin.users')}</p>
                     <p className="text-sm font-medium text-foreground">{center._count.users}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Children</p>
+                    <p className="text-sm text-muted-foreground">{t('admin.children')}</p>
                     <p className="text-sm font-medium text-foreground">{center._count.children}</p>
                   </div>
                 </div>

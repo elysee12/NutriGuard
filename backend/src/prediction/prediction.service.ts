@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, Logger, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { spawn } from 'child_process';
 import { join } from 'path';
@@ -15,24 +15,36 @@ export class PredictionService {
    * 'process.cwd()' ubu iri kureba mu mizi (root) y'umushinga.
    */
   async runPrediction(inputData: any) {
-    // 1. Inzira ijya kuri predict.py (Ubu iri mu mizi y'umushinga/Root)
-    const scriptPath = join(process.cwd(), 'predict.py');
+    // Mu buryo bwa production (Render), izi nzira zizaturuka muri Environment Variables
+    // Local (Windows), tuzakoresha inzira isanzwe niba nta kintu cyashyizweho
+    const isWindows = process.platform === 'win32';
     
-    this.logger.log(`Running prediction with script at: ${scriptPath}`);
+    const scriptPath = process.env.PYTHON_SCRIPT_PATH || join(process.cwd(), '..', 'predict.py');
+    
+    // Hitamo python executable bitewe na environment
+    let defaultPython = isWindows ? 'python' : 'python3';
+    
+    // Niba turi muri Windows kandi hari .venv, koresha iyo
+    if (isWindows && !process.env.PYTHON_PATH) {
+      const venvPath = join(process.cwd(), '..', '.venv', 'Scripts', 'python.exe');
+      // Turebe niba iyi file ihari (Optional but safer)
+      defaultPython = venvPath;
+    }
+
+    const pythonPath = process.env.PYTHON_PATH || defaultPython;
+    
+    this.logger.log(`Running prediction using: ${pythonPath} with script at: ${scriptPath}`);
 
     return new Promise((resolve, reject) => {
-      // 2. Guhamagara Python3 (Ohereza data nka JSON string muri arguments)
-      const pythonProcess = spawn('python3', [scriptPath, JSON.stringify(inputData)]);
+      const pythonProcess = spawn(pythonPath, [scriptPath]);
 
       let result = '';
       let errorData = '';
 
-      // Fata igisubizo kiva muri Python
       pythonProcess.stdout.on('data', (data) => {
         result += data.toString();
       });
 
-      // Fata amakosa (Errors) niba yabayeho
       pythonProcess.stderr.on('data', (data) => {
         errorData += data.toString();
       });
@@ -47,17 +59,13 @@ export class PredictionService {
           this.logger.error(`Python exited with code ${code}. Error: ${errorData}`);
           return reject(new InternalServerErrorException(`Python Script Error: ${errorData}`));
         }
-
         try {
-          // Genzura niba Python hari icyo yasohoye
           if (!result.trim()) {
             return reject(new InternalServerErrorException('Python script returned empty result'));
           }
 
-          // Garura igisubizo nka JSON kiva muri Python
           const parsedResult = JSON.parse(result.trim());
           
-          // Niba muri Python harabayemo Exception tuyifate hano
           if (parsedResult.error) {
             this.logger.error(`Prediction Error from Python: ${parsedResult.error}`);
             return reject(new InternalServerErrorException(parsedResult.error));
@@ -69,35 +77,94 @@ export class PredictionService {
           reject(new InternalServerErrorException('Invalid JSON output from Python script'));
         }
       });
+
+      pythonProcess.stdin.write(JSON.stringify(inputData));
+      pythonProcess.stdin.end();
     });
   }
 
-  async findAll() {
-    return this.prisma.prediction.findMany({
-      include: {
-        assessment: {
-          include: {
-            child: true,
-            chw: true,
+  async findAll(user: any) {
+    if (user.role === 'ADMIN') {
+      return this.prisma.prediction.findMany({
+        include: {
+          assessment: {
+            include: {
+              child: true,
+              chw: true,
+            },
           },
         },
-      },
-    });
+      });
+    } else if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || !nurse.healthCenterId) {
+        return [];
+      }
+      return this.prisma.prediction.findMany({
+        where: {
+          assessment: {
+            chw: {
+              healthCenterId: nurse.healthCenterId,
+            },
+          },
+        },
+        include: {
+          assessment: {
+            include: {
+              child: true,
+              chw: true,
+            },
+          },
+        },
+      });
+    } else {
+      // CHW role
+      return this.prisma.prediction.findMany({
+        where: {
+          assessment: {
+            chwId: user.userId,
+          },
+        },
+        include: {
+          assessment: {
+            include: {
+              child: true,
+              chw: true,
+            },
+          },
+        },
+      });
+    }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user: any) {
     const prediction = await this.prisma.prediction.findUnique({
       where: { id },
       include: {
         assessment: {
           include: {
             child: true,
-            chw: true,
+            chw: {
+              include: { healthCenter: true }
+            },
           },
         },
       },
     });
     if (!prediction) throw new NotFoundException('Prediction not found');
+
+    // Authorization check
+    if (user.role === 'CHW' && prediction.assessment.chwId !== user.userId) {
+      throw new ForbiddenException('You can only access predictions for your assessments');
+    }
+
+    if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || nurse.healthCenterId !== prediction.assessment.chw.healthCenterId) {
+        throw new ForbiddenException('You can only access predictions from your health center');
+      }
+    }
+
     return prediction;
   }
 }

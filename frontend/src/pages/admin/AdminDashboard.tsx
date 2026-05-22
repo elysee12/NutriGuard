@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface User {
   id: number;
@@ -27,6 +28,7 @@ interface HealthCenter {
 export default function AdminDashboard() {
   const { token } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [healthCenters, setHealthCenters] = useState<HealthCenter[]>([]);
@@ -77,18 +79,18 @@ export default function AdminDashboard() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update user status');
+        throw new Error(data.message || t('admin.update_failed'));
       }
 
       setPendingUsers((prev) => prev.filter((user) => user.id !== userId));
       toast({
-        title: `User ${status === 'APPROVED' ? 'approved' : 'rejected'}`,
-        description: `The user request has been ${status === 'APPROVED' ? 'approved' : 'rejected'}.`,
+        title: status === 'APPROVED' ? t('admin.approve') : t('admin.reject'),
+        description: t('admin.user_updated_desc'),
       });
     } catch (error: any) {
       toast({
-        title: 'Action failed',
-        description: error?.message || 'Unable to update user status.',
+        title: t('common.error'),
+        description: error?.message || t('admin.update_failed'),
         variant: 'destructive',
       });
     } finally {
@@ -99,26 +101,26 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
-        <PageHeader title="Admin Dashboard" description="National overview — NutriGuard System" />
+        <PageHeader title={t('admin.dashboard_title')} description={t('admin.dashboard_desc')} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="Total Users" value={stats?.totalUsers || 0} icon={<Users className="h-6 w-6" />} change={`+${stats?.pendingUsers || 0} pending`} changeType="neutral" />
-          <StatCard title="Health Centers" value={stats?.totalHealthCenters || 0} icon={<Building2 className="h-6 w-6" />} />
-          <StatCard title="Children Screened" value={stats?.totalChildren || 0} icon={<BarChart3 className="h-6 w-6" />} changeType="positive" />
-          <StatCard title="High Risk Cases" value={stats?.highRiskCount || 0} icon={<AlertTriangle className="h-6 w-6" />} changeType="negative" />
+          <StatCard title={t('admin.total_users')} value={stats?.totalUsers || 0} icon={<Users className="h-6 w-6" />} change={`+${stats?.pendingUsers || 0} ${t('admin.pending')}`} changeType="neutral" />
+          <StatCard title={t('admin.health_centers')} value={stats?.totalHealthCenters || 0} icon={<Building2 className="h-6 w-6" />} />
+          <StatCard title={t('admin.children_screened')} value={stats?.totalChildren || 0} icon={<BarChart3 className="h-6 w-6" />} changeType="positive" />
+          <StatCard title={t('admin.high_risk_cases')} value={stats?.highRiskCount || 0} icon={<AlertTriangle className="h-6 w-6" />} changeType="negative" />
         </div>
 
         {/* Pending Approvals */}
         <div className="bg-card rounded-xl border shadow-sm mb-6">
           <div className="p-6 border-b flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-card-foreground">Pending User Approvals</h2>
-            <span className="bg-warning/10 text-warning text-xs font-bold px-2.5 py-1 rounded-full">{pendingUsers.length} pending</span>
+            <h2 className="font-display text-lg font-semibold text-card-foreground">{t('admin.pending_approvals')}</h2>
+            <span className="bg-warning/10 text-warning text-xs font-bold px-2.5 py-1 rounded-full">{pendingUsers.length} {t('admin.pending')}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  {["Name", "Email", "Role", "Health Center", "Date", "Actions"].map((h) => (
+                  {[t('common.name'), t('common.email'), t('common.role'), t('common.health_center'), t('common.date'), t('common.actions')].map((h) => (
                     <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
                   ))}
                 </tr>
@@ -129,7 +131,7 @@ export default function AdminDashboard() {
                     <td className="p-4 text-sm font-medium text-foreground">{u.name}</td>
                     <td className="p-4 text-sm text-muted-foreground">{u.email}</td>
                     <td className="p-4"><span className="bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-1 rounded-full">{u.role}</span></td>
-                    <td className="p-4 text-sm text-muted-foreground">{u.healthCenter?.name || 'N/A'}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{u.healthCenter?.name || t('common.na')}</td>
                     <td className="p-4 text-sm text-muted-foreground">{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td className="p-4 flex gap-2">
                       <Button
@@ -137,7 +139,7 @@ export default function AdminDashboard() {
                         disabled={submittingUserId === u.id}
                         onClick={() => handleStatusChange(u.id, 'APPROVED')}
                       >
-                        {submittingUserId === u.id ? 'Approving…' : 'Approve'}
+                        {submittingUserId === u.id ? t('admin.approving') : t('admin.approve')}
                       </Button>
                       <Button
                         size="sm"
@@ -146,14 +148,14 @@ export default function AdminDashboard() {
                         disabled={submittingUserId === u.id}
                         onClick={() => handleStatusChange(u.id, 'REJECTED')}
                       >
-                        {submittingUserId === u.id ? 'Rejecting…' : 'Reject'}
+                        {submittingUserId === u.id ? t('admin.rejecting') : t('admin.reject')}
                       </Button>
                     </td>
                   </tr>
                 ))}
                 {pendingUsers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">No pending approvals found.</td>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">{t('dashboard.no_pending_reviews')}</td>
                   </tr>
                 )}
               </tbody>
@@ -164,13 +166,13 @@ export default function AdminDashboard() {
         {/* Health Centers */}
         <div className="bg-card rounded-xl border shadow-sm">
           <div className="p-6 border-b">
-            <h2 className="font-display text-lg font-semibold text-card-foreground">Health Centers</h2>
+            <h2 className="font-display text-lg font-semibold text-card-foreground">{t('admin.health_centers')}</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  {["Name", "Location", "Assigned Nurse", "CHWs", "Children"].map((h) => (
+                  {[t('common.name'), t('admin.location'), "Assigned Nurse", t('admin.users'), t('admin.children')].map((h) => (
                     <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
                   ))}
                 </tr>
@@ -181,7 +183,7 @@ export default function AdminDashboard() {
                     <td className="p-4 text-sm font-medium text-foreground">{c.name}</td>
                     <td className="p-4 text-sm text-muted-foreground">{c.location}</td>
                     <td className="p-4 text-sm text-muted-foreground">
-                      {c.users?.find(u => u.role === 'NURSE')?.name || 'Not Assigned'}
+                      {c.users?.find(u => u.role === 'NURSE')?.name || t('common.not_assigned')}
                     </td>
                     <td className="p-4 text-sm text-muted-foreground">{c._count.users}</td>
                     <td className="p-4 text-sm text-muted-foreground">{c._count.children}</td>

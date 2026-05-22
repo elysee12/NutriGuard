@@ -77,6 +77,23 @@ describe("authentication related pages", () => {
     expect(localStorage.getItem("hc_nurse")).toBe("Gikondo Health Center");
   });
 
+  it("registration shows health center dropdown for CHW role", () => {
+    const { getByRole, getByLabelText } = render(
+      <MemoryRouter initialEntries={["/register"]}>
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    // CHW role is usually default, but let's click it to be sure
+    const chwButton = getByRole("button", { name: /chw/i });
+    fireEvent.click(chwButton);
+    
+    // Now health center dropdown should be visible (as the last field)
+    const hcSelect = getByLabelText(/health center/i);
+    expect(hcSelect).toBeInTheDocument();
+  });
+
   it("dashboard components display stored health center after login", () => {
     // set up stored centers and simulate login via AuthProvider
     localStorage.setItem("hc_chw", "Kicukiro Health Center");

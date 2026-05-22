@@ -7,6 +7,7 @@ import { Download, Filter, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface AssessmentRecord {
   id: number;
@@ -30,6 +31,7 @@ type DateFilterType = "today" | "week" | "month" | "year" | "custom";
 
 export default function NurseReports() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [assessments, setAssessments] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(true);
@@ -181,12 +183,12 @@ export default function NurseReports() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
         <PageHeader
-          title="Assessment Reports"
+          title={t('assessment.assessment_reports')}
           description="View and analyze assessment data from your health center"
           actions={
             <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-4 w-4 mr-2" />
-              {showFilters ? "Hide" : "Show"} Filters
+              {showFilters ? t('assessment.hide_filters') : t('assessment.show_filters')}
             </Button>
           }
         />
@@ -197,7 +199,7 @@ export default function NurseReports() {
             <div className="space-y-4">
               {/* Date Filtering */}
               <div>
-                <h3 className="font-semibold text-foreground mb-3">Date Range</h3>
+                <h3 className="font-semibold text-foreground mb-3">{t('assessment.date_range')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
                   {(["today", "week", "month", "year", "custom"] as DateFilterType[]).map((type) => (
                     <button
@@ -209,11 +211,11 @@ export default function NurseReports() {
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
-                      {type === "today" && "Today"}
-                      {type === "week" && "This Week"}
-                      {type === "month" && "This Month"}
-                      {type === "year" && "This Year"}
-                      {type === "custom" && "Custom"}
+                      {type === "today" && t('assessment.today')}
+                      {type === "week" && t('assessment.this_week')}
+                      {type === "month" && t('assessment.this_month')}
+                      {type === "year" && t('assessment.this_year')}
+                      {type === "custom" && t('assessment.custom')}
                     </button>
                   ))}
                 </div>
@@ -222,7 +224,7 @@ export default function NurseReports() {
                 {dateFilterType === "custom" && (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label>From</Label>
+                      <Label>{t('assessment.from')}</Label>
                       <Input
                         type="date"
                         className="h-10"
@@ -231,7 +233,7 @@ export default function NurseReports() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>To</Label>
+                      <Label>{t('assessment.to')}</Label>
                       <Input
                         type="date"
                         className="h-10"
@@ -245,10 +247,10 @@ export default function NurseReports() {
 
               {/* Location Filtering */}
               <div>
-                <h3 className="font-semibold text-foreground mb-3">Location</h3>
+                <h3 className="font-semibold text-foreground mb-3">{t('location.location_title')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
-                    <Label>Sector</Label>
+                    <Label>{t('location.sector')}</Label>
                     <select
                       className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                       value={sector}
@@ -258,7 +260,7 @@ export default function NurseReports() {
                         setVillage("");
                       }}
                     >
-                      <option value="">All Sectors</option>
+                      <option value="">{t('assessment.all')}</option>
                       {sectors.map((s) => (
                         <option key={s} value={s}>
                           {s}
@@ -267,7 +269,7 @@ export default function NurseReports() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Cell</Label>
+                    <Label>{t('location.cell')}</Label>
                     <select
                       className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                       value={cell}
@@ -276,7 +278,7 @@ export default function NurseReports() {
                         setVillage("");
                       }}
                     >
-                      <option value="">All Cells</option>
+                      <option value="">{t('assessment.all')}</option>
                       {cells.map((c) => (
                         <option key={c} value={c}>
                           {c}
@@ -285,13 +287,13 @@ export default function NurseReports() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Village</Label>
+                    <Label>{t('location.village')}</Label>
                     <select
                       className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                       value={village}
                       onChange={(e) => setVillage(e.target.value)}
                     >
-                      <option value="">All Villages</option>
+                      <option value="">{t('assessment.all')}</option>
                       {villages.map((v) => (
                         <option key={v} value={v}>
                           {v}
@@ -310,7 +312,7 @@ export default function NurseReports() {
                   className="flex items-center gap-2"
                 >
                   <X className="h-4 w-4" />
-                  Clear Filters
+                  {t('assessment.clear_filters')}
                 </Button>
               </div>
             </div>
@@ -321,23 +323,23 @@ export default function NurseReports() {
         {!loading && filteredAssessments.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
             <div className="bg-card rounded-xl border shadow-sm p-4">
-              <p className="text-sm text-muted-foreground mb-1">Total Assessments</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard.total_assessments', 'Total Assessments')}</p>
               <p className="text-2xl font-bold text-foreground">{stats.total}</p>
             </div>
             <div className="bg-card rounded-xl border shadow-sm p-4">
-              <p className="text-sm text-muted-foreground mb-1">High Risk</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard.high_risk')}</p>
               <p className="text-2xl font-bold text-destructive">{stats.highRisk}</p>
             </div>
             <div className="bg-card rounded-xl border shadow-sm p-4">
-              <p className="text-sm text-muted-foreground mb-1">Moderate Risk</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard.moderate_risk')}</p>
               <p className="text-2xl font-bold text-warning">{stats.moderate}</p>
             </div>
             <div className="bg-card rounded-xl border shadow-sm p-4">
-              <p className="text-sm text-muted-foreground mb-1">Low Risk</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard.low_risk')}</p>
               <p className="text-2xl font-bold text-success">{stats.low}</p>
             </div>
             <div className="bg-card rounded-xl border shadow-sm p-4">
-              <p className="text-sm text-muted-foreground mb-1">Healthy Rate</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard.healthy_rate', 'Healthy Rate')}</p>
               <p className="text-2xl font-bold text-primary">{stats.healthyPercent}%</p>
             </div>
           </div>
@@ -346,27 +348,27 @@ export default function NurseReports() {
         {/* Assessment Table */}
         {loading ? (
           <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">
-            Loading assessments…
+            {t('common.loading')}
           </div>
         ) : filteredAssessments.length === 0 ? (
           <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">
-            No assessments found for the selected filters.
+            {t('dashboard.no_assessments')}
           </div>
         ) : (
           <div className="bg-card rounded-xl border shadow-sm overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Child</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Location</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('common.child')}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('common.date')}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('location.location_title')}</th>
                   <th className="text-left p-4 text-sm font-medium text-muted-foreground">CHW</th>
                   <th className="text-left p-4 text-sm font-medium text-muted-foreground">H (cm)</th>
                   <th className="text-left p-4 text-sm font-medium text-muted-foreground">W (kg)</th>
                   <th className="text-left p-4 text-sm font-medium text-muted-foreground">MUAC</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Prediction</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Risk</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('dashboard.ml_prediction')}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('dashboard.risk_level')}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('common.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -381,7 +383,7 @@ export default function NurseReports() {
                     <td className="p-4 text-sm text-muted-foreground">{a.height}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.weight}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.muac}</td>
-                    <td className="p-4 text-sm font-medium">{a.prediction?.result || "Pending"}</td>
+                    <td className="p-4 text-sm font-medium">{a.prediction?.result || t('dashboard.pending')}</td>
                     <td className="p-4">
                       <RiskBadge level={a.prediction?.riskLevel || "low"} />
                     </td>
@@ -391,7 +393,7 @@ export default function NurseReports() {
                           a.status === "REVIEWED" ? "text-success" : "text-warning"
                         }`}
                       >
-                        {a.status}
+                        {a.status === "REVIEWED" ? t('dashboard.reviewed') : t('dashboard.pending')}
                       </span>
                     </td>
                   </tr>

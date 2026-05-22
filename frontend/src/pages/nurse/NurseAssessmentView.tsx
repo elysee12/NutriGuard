@@ -6,6 +6,7 @@ import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface AssessmentDetails {
   id: number;
@@ -23,8 +24,10 @@ export default function NurseAssessmentView() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [assessment, setAssessment] = useState<AssessmentDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submittingStatus, setSubmittingStatus] = useState<"APPROVED" | "REJECTED" | null>(null);
 
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -35,20 +38,21 @@ export default function NurseAssessmentView() {
         if (response.ok) {
           setAssessment(await response.json());
         } else {
-          toast.error("Failed to load assessment details.");
+          toast.error(t('assessment.load_failed'));
         }
       } catch (error) {
         console.error("Error fetching assessment:", error);
-        toast.error("An error occurred while fetching the assessment.");
+        toast.error(t('common.error'));
       } finally {
         setLoading(false);
       }
     };
 
     if (token && id) fetchAssessment();
-  }, [id, token, API_URL]);
+  }, [id, token, API_URL, t]);
 
   const handleReviewSubmit = async (status: "APPROVED" | "REJECTED") => {
+    setSubmittingStatus(status);
     try {
       const response = await fetch(`${API_URL}/assessment/${id}/review`, {
         method: 'PATCH',
@@ -57,54 +61,56 @@ export default function NurseAssessmentView() {
       });
 
       if (response.ok) {
-        toast.success(`Assessment has been ${status.toLowerCase()}.`);
+        toast.success(status === "APPROVED" ? t('assessment.approved_msg') : t('assessment.rejected_msg'));
         navigate("/nurse/assessments");
       } else {
         const data = await response.json();
-        throw new Error(data.message || "Failed to update status.");
+        throw new Error(data.message || t('admin.update_failed'));
       }
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setSubmittingStatus(null);
     }
   };
 
-  if (loading) return <DashboardLayout><div className="p-8">Loading...</div></DashboardLayout>;
-  if (!assessment) return <DashboardLayout><div className="p-8">Assessment not found.</div></DashboardLayout>;
+  if (loading) return <DashboardLayout><div className="p-8">{t('common.loading')}</div></DashboardLayout>;
+  if (!assessment) return <DashboardLayout><div className="p-8">{t('dashboard.no_assessments')}</div></DashboardLayout>;
 
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-4xl mx-auto">
         <PageHeader
-          title={`Review Assessment for ${assessment.child.name}`}
-          description={`Submitted by ${assessment.chw.name} on ${new Date(assessment.date).toLocaleDateString()}`}
+          title={t('assessment.review_title', { name: assessment.child.name })}
+          description={t('assessment.submitted_by_on', { chw: assessment.chw.name, date: new Date(assessment.date).toLocaleDateString() })}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left Column: Child & Prediction */}
           <div className="md:col-span-2 space-y-6">
             <div className="bg-card rounded-xl border shadow-sm p-6">
-              <h3 className="font-semibold text-lg mb-4">Child Details</h3>
+              <h3 className="font-semibold text-lg mb-4">{t('assessment.child_info')}</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <p><strong>Name:</strong> {assessment.child.name}</p>
-                <p><strong>Gender:</strong> {assessment.child.gender}</p>
-                <p><strong>DoB:</strong> {new Date(assessment.child.dob).toLocaleDateString()}</p>
-                <p><strong>Mother:</strong> {assessment.child.motherName}</p>
+                <p><strong>{t('common.name')}:</strong> {assessment.child.name}</p>
+                <p><strong>{t('common.gender')}:</strong> {assessment.child.gender === 'M' ? t('assessment.male') : t('assessment.female')}</p>
+                <p><strong>{t('common.dob')}:</strong> {new Date(assessment.child.dob).toLocaleDateString()}</p>
+                <p><strong>{t('assessment.mother_name')}:</strong> {assessment.child.motherName}</p>
               </div>
             </div>
 
             <div className="bg-card rounded-xl border shadow-sm p-6">
-              <h3 className="font-semibold text-lg mb-4">ML Prediction & Recommendation</h3>
+              <h3 className="font-semibold text-lg mb-4">{t('assessment.ml_result')} & {t('assessment.recommendation')}</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">ML Result:</span>
+                  <span className="text-muted-foreground">{t('assessment.ml_result')}:</span>
                   <span className="font-bold text-lg">{assessment.prediction.result}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Risk Score:</span>
+                  <span className="text-muted-foreground">{t('assessment.risk_score')}:</span>
                   <RiskBadge level={assessment.prediction.riskLevel} score={assessment.prediction.riskScore} />
                 </div>
                 <div className="pt-2">
-                  <p className="text-muted-foreground font-semibold mb-1">Recommendation:</p>
+                  <p className="text-muted-foreground font-semibold mb-1">{t('assessment.recommendation')}:</p>
                   <p className="text-sm bg-muted/50 p-3 rounded-md">{assessment.prediction.recommendation}</p>
                 </div>
               </div>
@@ -114,20 +120,33 @@ export default function NurseAssessmentView() {
           {/* Right Column: Vitals & Action */}
           <div className="space-y-6">
             <div className="bg-card rounded-xl border shadow-sm p-6">
-              <h3 className="font-semibold text-lg mb-4">Vitals</h3>
+              <h3 className="font-semibold text-lg mb-4">{t('assessment.vitals')}</h3>
               <div className="space-y-2 text-sm">
-                <p><strong>Height:</strong> {assessment.height} cm</p>
-                <p><strong>Weight:</strong> {assessment.weight} kg</p>
-                <p><strong>MUAC:</strong> {assessment.muac} mm</p>
+                <p><strong>{t('assessment.height_cm')}:</strong> {assessment.height} cm</p>
+                <p><strong>{t('assessment.weight_kg')}:</strong> {assessment.weight} kg</p>
+                <p><strong>{t('assessment.muac_mm')}:</strong> {assessment.muac} mm</p>
               </div>
             </div>
 
             <div className="bg-card rounded-xl border shadow-sm p-6">
-              <h3 className="font-semibold text-lg mb-4">Action</h3>
-              <p className="text-sm text-muted-foreground mb-4">Review the details and approve or reject this assessment.</p>
+              <h3 className="font-semibold text-lg mb-4">{t('assessment.action')}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{t('assessment.review_desc')}</p>
               <div className="flex flex-col gap-3">
-                <Button size="lg" onClick={() => handleReviewSubmit("APPROVED")}>Approve</Button>
-                <Button size="lg" variant="destructive" onClick={() => handleReviewSubmit("REJECTED")}>Reject</Button>
+                <Button
+                  size="lg"
+                  disabled={submittingStatus !== null}
+                  onClick={() => handleReviewSubmit("APPROVED")}
+                >
+                  {submittingStatus === "APPROVED" ? t('assessment.processing') : t('admin.approve')}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="destructive"
+                  disabled={submittingStatus !== null}
+                  onClick={() => handleReviewSubmit("REJECTED")}
+                >
+                  {submittingStatus === "REJECTED" ? t('assessment.processing') : t('admin.reject')}
+                </Button>
               </div>
             </div>
           </div>

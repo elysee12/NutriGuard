@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Heart, Eye, EyeOff, Loader } from "lucide-react";
 import logo from "@/assets/logo.jpg";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 type Step = "email" | "otp" | "password";
 
@@ -14,6 +16,7 @@ export default function ForgotPasswordPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { forgotPassword, resetPassword } = useAuth();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -28,8 +31,8 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     if (!email.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter your email address",
+        title: t('common.error'),
+        description: t('auth.enter_email_error'),
         variant: "destructive",
       });
       return;
@@ -40,8 +43,8 @@ export default function ForgotPasswordPage() {
       await forgotPassword(email);
       setStep("otp");
       toast({
-        title: "Success",
-        description: "OTP has been sent to your email",
+        title: t('common.success'),
+        description: t('auth.otp_sent'),
       });
     } catch (error) {
       console.error("Failed to send OTP:", error);
@@ -54,8 +57,8 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     if (!otp.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter the OTP",
+        title: t('common.error'),
+        description: t('auth.enter_otp_error'),
         variant: "destructive",
       });
       return;
@@ -63,8 +66,8 @@ export default function ForgotPasswordPage() {
 
     if (otp.length !== 6) {
       toast({
-        title: "Error",
-        description: "OTP must be 6 digits",
+        title: t('common.error'),
+        description: t('auth.otp_digits_error'),
         variant: "destructive",
       });
       return;
@@ -72,8 +75,8 @@ export default function ForgotPasswordPage() {
 
     setStep("password");
     toast({
-      title: "OTP Verified",
-      description: "Now please set your new password",
+      title: t('auth.otp_verified'),
+      description: t('auth.set_new_password_now'),
     });
   };
 
@@ -82,8 +85,8 @@ export default function ForgotPasswordPage() {
 
     if (!newPassword.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a new password",
+        title: t('common.error'),
+        description: t('auth.enter_new_password_error'),
         variant: "destructive",
       });
       return;
@@ -91,8 +94,8 @@ export default function ForgotPasswordPage() {
 
     if (newPassword.length < 6) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: t('common.error'),
+        description: t('auth.password_min_length_error'),
         variant: "destructive",
       });
       return;
@@ -100,8 +103,8 @@ export default function ForgotPasswordPage() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
+        title: t('common.error'),
+        description: t('auth.passwords_dont_match'),
         variant: "destructive",
       });
       return;
@@ -111,8 +114,8 @@ export default function ForgotPasswordPage() {
     try {
       await resetPassword(email, otp, newPassword);
       toast({
-        title: "Success",
-        description: "Password has been reset successfully",
+        title: t('common.success'),
+        description: t('auth.password_reset_success'),
       });
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {
@@ -124,6 +127,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex">
+      {/* Language Selector Overlay */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSelector />
+      </div>
+
       {/* Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden flex-col justify-between p-12">
         <div className="absolute inset-0 opacity-10">
@@ -135,22 +143,22 @@ export default function ForgotPasswordPage() {
             <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
               <img src={logo} alt="NutriGuard logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="text-primary-foreground font-display text-xl font-bold">NutriGuard</span>
+            <span className="text-primary-foreground font-display text-xl font-bold">{t('home.title')}</span>
           </div>
         </div>
         <div className="relative z-10">
           <h1 className="text-primary-foreground font-display text-4xl font-bold leading-tight mb-4">
-            Early Detection of<br />Stunting in Children
+            {t('home.hero_title').split(' ').slice(0, 3).join(' ')}<br />{t('home.hero_title').split(' ').slice(3).join(' ')}
           </h1>
           <p className="text-primary-foreground/70 text-lg max-w-md">
-            ML-powered platform helping Rwanda's healthcare workers identify and prevent childhood stunting through data-driven assessments.
+            {t('home.subtitle')}
           </p>
         </div>
         <div className="relative z-10 flex gap-8">
           {[
-            { n: "12,450+", l: "Children Screened" },
-            { n: "340", l: "Health Workers" },
-            { n: "95%", l: "Detection Rate" },
+            { n: "12,450+", l: t('home.stats_children') },
+            { n: "340", l: t('home.stats_chw') },
+            { n: "95%", l: t('home.stats_detection') },
           ].map((s) => (
             <div key={s.l}>
               <div className="text-primary-foreground font-display text-2xl font-bold">{s.n}</div>
@@ -167,19 +175,19 @@ export default function ForgotPasswordPage() {
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
               <img src={logo} alt="NutriGuard logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="font-display text-xl font-bold text-foreground">NutriGuard</span>
+            <span className="font-display text-xl font-bold text-foreground">{t('home.title')}</span>
           </div>
 
           {/* Header */}
           <h2 className="font-display text-2xl font-bold text-foreground mb-1">
-            {step === "email" && "Forgot Password"}
-            {step === "otp" && "Enter OTP"}
-            {step === "password" && "Set New Password"}
+            {step === "email" && t('auth.forgot_password')}
+            {step === "otp" && t('auth.enter_otp')}
+            {step === "password" && t('auth.set_new_password')}
           </h2>
           <p className="text-muted-foreground mb-8">
-            {step === "email" && "Enter the email associated with your account and we'll send you an OTP to reset your password."}
-            {step === "otp" && "Enter the 6-digit OTP we sent to your email to verify your identity."}
-            {step === "password" && "Create a new password for your account. Make sure it's strong and secure."}
+            {step === "email" && t('auth.forgot_password_desc')}
+            {step === "otp" && t('auth.enter_otp_desc')}
+            {step === "password" && t('auth.set_new_password_desc')}
           </p>
 
           {/* Progress Indicator */}
@@ -193,7 +201,7 @@ export default function ForgotPasswordPage() {
           {step === "email" && (
             <form onSubmit={handleEmailSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t('auth.email_address')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -209,20 +217,20 @@ export default function ForgotPasswordPage() {
                 {loading ? (
                   <>
                     <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Sending OTP...
+                    {t('auth.sending_otp')}
                   </>
                 ) : (
-                  "Send OTP"
+                  t('auth.send_otp')
                 )}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
-                Remember your password?{" "}
+                {t('auth.remember_password')}{" "}
                 <span
                   className="text-primary font-medium cursor-pointer hover:underline"
                   onClick={() => navigate("/")}
                 >
-                  Sign in
+                  {t('auth.sign_in')}
                 </span>
               </p>
             </form>
@@ -232,9 +240,9 @@ export default function ForgotPasswordPage() {
           {step === "otp" && (
             <form onSubmit={handleOtpSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="otp">Enter OTP</Label>
+                <Label htmlFor="otp">{t('auth.enter_otp')}</Label>
                 <p className="text-xs text-muted-foreground mb-3">
-                  We sent a 6-digit code to <strong>{email}</strong>
+                  {t('auth.otp_sent_to', { email: <strong>{email}</strong> })}
                 </p>
                 <Input
                   id="otp"
@@ -248,7 +256,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading || otp.length !== 6}>
-                Verify OTP
+                {t('auth.verify_otp')}
               </Button>
 
               <div className="flex items-center gap-2">
@@ -258,7 +266,7 @@ export default function ForgotPasswordPage() {
                   className="flex-1"
                   onClick={() => setStep("email")}
                 >
-                  Back
+                  {t('auth.back')}
                 </Button>
                 <Button
                   type="button"
@@ -267,17 +275,17 @@ export default function ForgotPasswordPage() {
                   onClick={handleEmailSubmit}
                   disabled={loading}
                 >
-                  {loading ? "Resending..." : "Resend OTP"}
+                  {loading ? t('auth.resending') : t('auth.resend_otp')}
                 </Button>
               </div>
 
               <p className="text-center text-sm text-muted-foreground">
-                Remember your password?{" "}
+                {t('auth.remember_password')}{" "}
                 <span
                   className="text-primary font-medium cursor-pointer hover:underline"
                   onClick={() => navigate("/")}
                 >
-                  Sign in
+                  {t('auth.sign_in')}
                 </span>
               </p>
             </form>
@@ -287,7 +295,7 @@ export default function ForgotPasswordPage() {
           {step === "password" && (
             <form onSubmit={handlePasswordSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword">{t('auth.new_password')}</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
@@ -311,12 +319,12 @@ export default function ForgotPasswordPage() {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  At least 6 characters
+                  {t('auth.password_min_length_error')}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t('auth.confirm_password')}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -345,10 +353,10 @@ export default function ForgotPasswordPage() {
                 {loading ? (
                   <>
                     <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Resetting...
+                    {t('auth.resetting')}
                   </>
                 ) : (
-                  "Reset Password"
+                  t('auth.reset_password')
                 )}
               </Button>
 
@@ -359,16 +367,16 @@ export default function ForgotPasswordPage() {
                 onClick={() => setStep("otp")}
                 disabled={loading}
               >
-                Back
+                {t('auth.back')}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
-                Remember your password?{" "}
+                {t('auth.remember_password')}{" "}
                 <span
                   className="text-primary font-medium cursor-pointer hover:underline"
                   onClick={() => navigate("/")}
                 >
-                  Sign in
+                  {t('auth.sign_in')}
                 </span>
               </p>
             </form>
