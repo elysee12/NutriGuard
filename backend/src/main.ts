@@ -18,6 +18,7 @@ async function bootstrap() {
       'https://nutriguard-frontend.onrender.com',
       'http://localhost:5173', // Local Vite development
       'http://localhost:8080', // Alternative local port
+      'http://localhost:8081', // New local development port
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,

@@ -29,7 +29,7 @@ NutriGuard is an ML-powered platform designed to help healthcare workers in Rwan
 2. **Build Command**: `npm install && npm run build`
 3. **Start Command**: (Static site or `serve -s dist`)
 4. **Environment Variables**:
-   - `VITE_API_URL`: `https://nutriguard-z5yq.onrender.com`
+   - `VITE_API_URL`: `https://nutriguard-z5yq.onrender.com` (use `http://localhost:5173` for local development)
 
 ## Troubleshooting "Failed to start ML process"
 If you see an error about `ENOENT` or a path containing `.venv/Scripts/python.exe` on Render:
