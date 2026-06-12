@@ -7,6 +7,7 @@ import { Download, Filter, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
+import { groupWithRowspan } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 interface AssessmentRecord {
@@ -152,13 +153,17 @@ export default function NurseReports() {
     });
   }, [assessments, dateFilterType, customDateFrom, customDateTo, sector, cell, village]);
 
+  const processedAssessments = useMemo(() => {
+    return groupWithRowspan(filteredAssessments, (a) => a.child.name);
+  }, [filteredAssessments]);
+
   // Calculate statistics
   const stats = useMemo(() => {
-    const total = filteredAssessments.length;
-    const highRisk = filteredAssessments.filter((a) => a.prediction?.riskLevel === "high").length;
-    const moderate = filteredAssessments.filter((a) => a.prediction?.riskLevel === "moderate").length;
-    const low = filteredAssessments.filter((a) => a.prediction?.riskLevel === "low").length;
-    const stunted = filteredAssessments.filter((a) => a.prediction?.result === "Stunted").length;
+    const total = processedAssessments.length;
+    const highRisk = processedAssessments.filter((a) => a.prediction?.riskLevel === "high").length;
+    const moderate = processedAssessments.filter((a) => a.prediction?.riskLevel === "moderate").length;
+    const low = processedAssessments.filter((a) => a.prediction?.riskLevel === "low").length;
+    const stunted = processedAssessments.filter((a) => a.prediction?.result === "Stunted").length;
 
     return {
       total,
@@ -168,7 +173,7 @@ export default function NurseReports() {
       stunted,
       healthyPercent: total > 0 ? Math.round(((total - stunted) / total) * 100) : 0,
     };
-  }, [filteredAssessments]);
+  }, [processedAssessments]);
 
   const handleClearFilters = () => {
     setDateFilterType("month");
@@ -262,9 +267,7 @@ export default function NurseReports() {
                     >
                       <option value="">{t('assessment.all')}</option>
                       {sectors.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </div>
@@ -280,9 +283,7 @@ export default function NurseReports() {
                     >
                       <option value="">{t('assessment.all')}</option>
                       {cells.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
+                        <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
                   </div>
@@ -295,9 +296,7 @@ export default function NurseReports() {
                     >
                       <option value="">{t('assessment.all')}</option>
                       {villages.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
+                        <option key={v} value={v}>{v}</option>
                       ))}
                     </select>
                   </div>
@@ -320,7 +319,7 @@ export default function NurseReports() {
         )}
 
         {/* Summary Statistics */}
-        {!loading && filteredAssessments.length > 0 && (
+        {!loading && processedAssessments.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
             <div className="bg-card rounded-xl border shadow-sm p-4">
               <p className="text-sm text-muted-foreground mb-1">{t('dashboard.total_assessments', 'Total Assessments')}</p>
@@ -350,7 +349,7 @@ export default function NurseReports() {
           <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">
             {t('common.loading')}
           </div>
-        ) : filteredAssessments.length === 0 ? (
+        ) : processedAssessments.length === 0 ? (
           <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">
             {t('dashboard.no_assessments')}
           </div>
@@ -372,9 +371,13 @@ export default function NurseReports() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAssessments.map((a) => (
+                {processedAssessments.map((a) => (
                   <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="p-4 text-sm font-medium text-foreground">{a.child.name}</td>
+                    {a.isFirst && (
+                      <td className="p-4 text-sm font-medium text-foreground align-top" rowSpan={a.rowspan}>
+                        {a.child.name}
+                      </td>
+                    )}
                     <td className="p-4 text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString()}</td>
                     <td className="p-4 text-sm text-muted-foreground">
                       {[a.child.sector, a.child.cell, a.child.village].filter(Boolean).join(" / ")}
@@ -406,4 +409,3 @@ export default function NurseReports() {
     </DashboardLayout>
   );
 }
-

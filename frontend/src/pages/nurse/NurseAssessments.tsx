@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
 import { API_URL } from "@/lib/api";
+import { groupWithRowspan } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 interface AssessmentRecord {
@@ -106,6 +107,10 @@ export default function NurseAssessments() {
     });
   }, [assessments, dateFrom, dateTo, sector, cell, village]);
 
+  const processedAssessments = useMemo(() => {
+    return groupWithRowspan(filteredAssessments, (a) => a.child.id);
+  }, [filteredAssessments]);
+
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
@@ -192,14 +197,18 @@ export default function NurseAssessments() {
                 <tr>
                   <td colSpan={10} className="p-8 text-center text-muted-foreground">{t('common.loading')}</td>
                 </tr>
-              ) : filteredAssessments.length === 0 ? (
+              ) : processedAssessments.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="p-8 text-center text-muted-foreground">{t('dashboard.no_assessments')}</td>
                 </tr>
               ) : (
-                filteredAssessments.map((a) => (
+                processedAssessments.map((a) => (
                   <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="p-4 text-sm font-medium text-foreground">{a.child.name}</td>
+                    {a.isFirst && (
+                      <td className="p-4 text-sm font-medium text-foreground align-top" rowSpan={a.rowspan}>
+                        {a.child.name}
+                      </td>
+                    )}
                     <td className="p-4 text-sm text-muted-foreground">{a.chw?.name || t('admin.unknown_user')}</td>
                     <td className="p-4 text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString()}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.height}</td>

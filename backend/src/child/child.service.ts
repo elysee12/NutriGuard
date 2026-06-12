@@ -48,6 +48,18 @@ export class ChildService {
       throw new ForbiddenException('Unauthorized to register child');
     }
 
+    // Check for duplicate child (same name and same mother name)
+    const existingChild = await this.prisma.child.findFirst({
+      where: {
+        name: createChildDto.name,
+        motherName: createChildDto.motherName,
+      },
+    });
+
+    if (existingChild) {
+      throw new ForbiddenException('Child with this name and mother name is already registered');
+    }
+
     return this.prisma.child.create({
       data: {
         ...createChildDto,
@@ -56,6 +68,19 @@ export class ChildService {
         healthCenterId,
       },
       include: { chw: true },
+    });
+  }
+
+  async search(name?: string, motherName?: string) {
+    return this.prisma.child.findMany({
+      where: {
+        AND: [
+          name ? { name: { contains: name } } : {},
+          motherName ? { motherName: { contains: motherName } } : {},
+        ],
+      },
+      include: { chw: true, healthCenter: true },
+      take: 5,
     });
   }
 

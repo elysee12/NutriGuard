@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req, ParseIntPipe, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Req, ParseIntPipe, Patch, Delete, Query } from '@nestjs/common';
 import { ChildService } from './child.service';
 import { CreateChildDto } from './dto/create-child.dto';
 import { UpdateChildDto } from './dto/update-child.dto';
@@ -12,6 +12,11 @@ export class ChildController {
   @Post()
   create(@Body() createChildDto: CreateChildDto, @Req() req) {
     return this.childService.create(createChildDto, req.user.userId, req.user.role);
+  }
+
+  @Get('search')
+  search(@Query('name') name: string, @Query('motherName') motherName: string) {
+    return this.childService.search(name, motherName);
   }
 
   @Get()

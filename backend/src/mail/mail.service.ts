@@ -4,18 +4,30 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null = null;
+  private isConfigured = false;
 
   constructor(private configService: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: this.configService.get('EMAIL_HOST'),
-      port: this.configService.get('EMAIL_PORT'),
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: this.configService.get('SMTP_USER'),
-        pass: this.configService.get('SMTP_PASS'),
-      },
-    });
+    const host = this.configService.get('EMAIL_HOST');
+    const port = this.configService.get('EMAIL_PORT');
+    const user = this.configService.get('SMTP_USER');
+    const pass = this.configService.get('SMTP_PASS');
+    
+    if (host && port && user && pass) {
+      try {
+        this.transporter = nodemailer.createTransport({
+          host,
+          port: parseInt(port as string, 10),
+          secure: false,
+          auth: { user, pass },
+        });
+        this.isConfigured = true;
+      } catch (error) {
+        console.warn('Mail service not configured properly:', error.message);
+      }
+    } else {
+      console.warn('Mail service not configured - SMTP credentials missing');
+    }
   }
 
   private getBaseTemplate(content: string, title: string) {
@@ -59,6 +71,10 @@ export class MailService {
   }
 
   async sendMail(to: string, subject: string, content: string) {
+    if (!this.isConfigured || !this.transporter) {
+      console.warn('Mail not sent - mail service not configured');
+      return;
+    }
     try {
       await this.transporter.sendMail({
         from: `"NutriGuard Support" <${this.configService.get('SMTP_USER')}>`,

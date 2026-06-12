@@ -9,6 +9,7 @@ import { Heart } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { fetchPublicStats, PublicStats } from "@/lib/api";
 
 // simple helper to parse query params
 function useQuery() {
@@ -24,8 +25,13 @@ export default function ResetPasswordPage() {
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [stats, setStats] = useState<PublicStats | null>(null);
 
   const { resetPassword } = useAuth();
+
+  useEffect(() => {
+    fetchPublicStats().then(setStats).catch(console.error);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +81,9 @@ export default function ResetPasswordPage() {
         </div>
         <div className="relative z-10 flex gap-8">
           {[
-            { n: "12,450+", l: t('home.stats_children') },
-            { n: "340", l: t('home.stats_chw') },
-            { n: "95%", l: t('home.stats_detection') },
+            { n: stats ? `${stats.totalChildren.toLocaleString()}+` : "12,450+", l: t('home.stats_children') },
+            { n: stats ? stats.totalHealthWorkers.toLocaleString() : "340", l: t('home.stats_chw') },
+            { n: stats ? stats.detectionRate : "95%", l: t('home.stats_detection') },
           ].map((s) => (
             <div key={s.l}>
               <div className="text-primary-foreground font-display text-2xl font-bold">{s.n}</div>

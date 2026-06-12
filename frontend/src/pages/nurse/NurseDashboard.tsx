@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { groupWithRowspan } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 interface PendingReview {
   id: number;
-  child: { name: string };
+  child: { name: string; id?: number };
   chw: { name: string };
   date: string;
   prediction: { result: string; riskScore: number; riskLevel: "low" | "moderate" | "high" };
@@ -49,6 +50,10 @@ export default function NurseDashboard() {
 
     if (token) fetchDashboardData();
   }, [token, API_URL]);
+
+  const processedReviews = useMemo(() => {
+    return groupWithRowspan(pendingReviews, (r) => r.child.id || r.child.name);
+  }, [pendingReviews]);
 
   return (
     <DashboardLayout>
@@ -92,9 +97,13 @@ export default function NurseDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {pendingReviews.map((r) => (
+                {processedReviews.map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="p-4 text-sm font-medium text-foreground">{r.child.name}</td>
+                    {r.isFirst && (
+                      <td className="p-4 text-sm font-medium text-foreground align-top" rowSpan={r.rowspan}>
+                        {r.child.name}
+                      </td>
+                    )}
                     <td className="p-4 text-sm text-muted-foreground">{r.chw.name}</td>
                     <td className="p-4 text-sm text-muted-foreground">{new Date(r.date).toLocaleDateString()}</td>
                     <td className="p-4 text-sm font-medium text-foreground">{r.prediction?.result} ({r.prediction?.riskScore}%)</td>
@@ -104,7 +113,7 @@ export default function NurseDashboard() {
                     </td>
                   </tr>
                 ))}
-                {pendingReviews.length === 0 && (
+                {processedReviews.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-muted-foreground">{t('dashboard.no_pending_reviews')}</td>
                   </tr>

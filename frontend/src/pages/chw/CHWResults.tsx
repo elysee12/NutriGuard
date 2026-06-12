@@ -2,10 +2,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { PageHeader, RiskBadge } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
 import { API_URL } from "@/lib/api";
+import { groupWithRowspan } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 interface ResultRecord {
@@ -54,7 +55,11 @@ export default function CHWResults() {
     };
 
     loadResults();
-  }, [API_URL, token, user?.id, user?.role]);
+  }, [API_URL, token, user?.id, user?.role, t]);
+
+  const processedResults = useMemo(() => {
+    return groupWithRowspan(results, (r) => r.child.id);
+  }, [results]);
 
   const calculateAge = (dob: string) => {
     const diff = new Date().getTime() - new Date(dob).getTime();
@@ -71,10 +76,10 @@ export default function CHWResults() {
           <div className="block sm:hidden divide-y">
             {loading ? (
               <div className="p-8 text-center text-muted-foreground animate-pulse">{t('common.loading')}</div>
-            ) : results.length === 0 ? (
+            ) : processedResults.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">{t('dashboard.no_assessments')}</div>
             ) : (
-              results.map((r) => (
+              processedResults.map((r) => (
                 <div key={r.id} className="p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
@@ -138,16 +143,20 @@ export default function CHWResults() {
                       {t('common.loading')}
                     </td>
                   </tr>
-                ) : results.length === 0 ? (
+                ) : processedResults.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-muted-foreground">
                       {t('dashboard.no_assessments')}
                     </td>
                   </tr>
                 ) : (
-                  results.map((r) => (
+                  processedResults.map((r) => (
                     <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="p-4 text-sm font-medium text-foreground">{r.child.name}</td>
+                      {r.isFirst && (
+                        <td className="p-4 text-sm font-medium text-foreground align-top" rowSpan={r.rowspan}>
+                          {r.child.name}
+                        </td>
+                      )}
                       <td className="p-4 text-sm text-muted-foreground">{calculateAge(r.child.dob)}</td>
                       <td className="p-4 text-sm text-muted-foreground">{new Date(r.date).toLocaleDateString()}</td>
                       <td className="p-4">

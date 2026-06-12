@@ -58,4 +58,23 @@ export class StatsService {
       followUpRate: '92%', // Mocked for now
     };
   }
+
+  async getPublicStats() {
+    const [totalChildren, totalHealthWorkers] = await Promise.all([
+      this.prisma.child.count(),
+      this.prisma.user.count({
+        where: {
+          role: {
+            in: [UserRole.CHW, UserRole.NURSE],
+          },
+        },
+      }),
+    ]);
+
+    return {
+      totalChildren,
+      totalHealthWorkers,
+      detectionRate: '95%',
+    };
+  }
 }

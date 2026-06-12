@@ -4,10 +4,15 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserRole } from '@prisma/client';
 
 @Controller('stats')
-@UseGuards(JwtAuthGuard)
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
+  @Get('public')
+  async getPublicStats() {
+    return this.statsService.getPublicStats();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('dashboard')
   async getDashboardStats(@Req() req) {
     const user = req.user;

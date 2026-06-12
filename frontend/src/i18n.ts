@@ -50,6 +50,8 @@ const resources = {
         "village": "Village",
         "gender": "Gender",
         "dob": "Date of Birth",
+        "child": "Child",
+        "registered": "Registered",
         "email": "Email",
         "role": "Role",
         "health_center": "Health Center",
@@ -64,7 +66,9 @@ const resources = {
         "no_results": "No results found.",
         "no_centers": "No health centers available",
         "welcome_back_desc": "We're glad to have you back.",
-        "monitoring_review": "Monitoring & Review"
+        "monitoring_review": "Monitoring & Review",
+        "previous": "Previous",
+        "next": "Next"
       },
       "admin": {
         "dashboard_title": "Admin Dashboard",
@@ -443,7 +447,9 @@ const resources = {
         "no_results": "Nta byabonetse.",
         "no_centers": "Nta bigo by'ubuzima bihari",
         "welcome_back_desc": "Twishimiye ko mugarutse.",
-        "monitoring_review": "Igenzura & Isuzuma"
+        "monitoring_review": "Igenzura & Isuzuma",
+        "previous": "Ibibanza",
+        "next": "Ibikurikira"
       },
       "admin": {
         "dashboard_title": "Igenzura ry'Umuyobozi",
