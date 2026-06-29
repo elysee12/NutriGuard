@@ -147,9 +147,9 @@ export default function ForgotPasswordPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
-              <img src={logo} alt="NutriGuard logo" className="h-6 w-6 object-contain" />
+              <img src={logo} alt="e-KuraNeza Kibondo logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="text-primary-foreground font-display text-xl font-bold">{t('home.title')}</span>
+            <span className="text-primary-foreground font-display text-lg font-bold">e-KuraNeza Kibondo</span>
           </div>
         </div>
         <div className="relative z-10">
@@ -179,9 +179,9 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-              <img src={logo} alt="NutriGuard logo" className="h-6 w-6 object-contain" />
+              <img src={logo} alt="e-KuraNeza Kibondo logo" className="h-6 w-6 object-contain" />
             </div>
-            <span className="font-display text-xl font-bold text-foreground">{t('home.title')}</span>
+            <span className="font-display text-lg font-bold text-foreground">e-KuraNeza Kibondo</span>
           </div>
 
           {/* Header */}

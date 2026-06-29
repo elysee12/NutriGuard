@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { X, Calendar, User, MapPin, Loader } from "lucide-react";
+import { X, Calendar, User, MapPin, Loader, CheckCircle2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/DashboardComponents";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ChildProfileData {
   id: number;
@@ -65,35 +67,64 @@ export default function ChildDetailsModal({
   apiUrl,
 }: ChildDetailsModalProps) {
   const { t } = useTranslation();
+  const { user: authUser } = useAuth();
   const [child, setChild] = useState<ChildProfileData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadChildDetails = async () => {
-      setLoading(true);
-      setError(null);
+  const loadChildDetails = async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch(`${apiUrl}/child/${childId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    try {
+      const response = await fetch(`${apiUrl}/child/${childId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        if (!response.ok) {
-          throw new Error(t('assessment.load_failed'));
-        }
-
-        const data = await response.json();
-        setChild(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('common.error'));
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(t('assessment.load_failed'));
       }
-    };
 
+      const data = await response.json();
+      setChild(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadChildDetails();
   }, [childId, token, apiUrl, t]);
+
+  const handleUpdateStatus = async (assessmentId: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'PENDING' ? 'REVIEWED' : 'PENDING';
+    setUpdatingStatus(assessmentId);
+    
+    try {
+      const response = await fetch(`${apiUrl}/assessment/${assessmentId}/review`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      toast.success(t('assessment.status_updated'));
+      await loadChildDetails();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error updating status');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   if (!token) return null;
 
@@ -210,13 +241,14 @@ export default function ChildDetailsModal({
                     {t('assessment.no_assessments_yet')}
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+                  <div className="space-y-3">
                     {child.assessments
                       .filter((a) => !assessmentId || a.id === assessmentId)
                       .map((assessment) => (
                       <div
                         key={assessment.id}
                         className="bg-card border rounded-lg p-4 hover:shadow-md transition-shadow space-y-4"
+                        style={{ overflow: 'visible', height: 'auto' }}
                       >
                         {/* Assessment Header */}
                         <div className="flex items-start justify-between gap-4 pb-3 border-b">
@@ -227,6 +259,33 @@ export default function ChildDetailsModal({
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
+                            {authUser?.role === 'NURSE' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={`h-7 px-2 text-xs flex items-center gap-1 transition-all ${
+                                  assessment.status === 'PENDING' 
+                                    ? "hover:bg-success/10 hover:text-success border-success/30" 
+                                    : "hover:bg-warning/10 hover:text-warning border-warning/30"
+                                }`}
+                                onClick={() => handleUpdateStatus(assessment.id, assessment.status)}
+                                disabled={updatingStatus === assessment.id}
+                              >
+                                {updatingStatus === assessment.id ? (
+                                  <Loader className="h-3 w-3 animate-spin" />
+                                ) : assessment.status === 'PENDING' ? (
+                                  <>
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                                    <span>{t('dashboard.reviewed')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <RotateCcw className="h-3.5 w-3.5 text-warning" />
+                                    <span>{t('dashboard.pending')}</span>
+                                  </>
+                                )}
+                              </Button>
+                            )}
                             <span
                               className={`text-xs font-semibold px-2 py-1 rounded ${
                                 assessment.status === "REVIEWED"
@@ -334,7 +393,7 @@ export default function ChildDetailsModal({
                         {assessment.prediction && (
                           <div>
                             <h4 className="text-sm font-semibold text-foreground mb-3">{t('assessment.ml_prediction_clinical')}</h4>
-                            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 space-y-3 border border-primary/20">
+                            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 space-y-4 border border-primary/20" style={{ height: 'auto', overflow: 'visible' }}>
                               <div className="flex items-center justify-between">
                                 <div>
                                   <span className="text-sm text-muted-foreground">{t('assessment.prediction_result')}:</span>
@@ -365,10 +424,22 @@ export default function ChildDetailsModal({
                               </div>
 
                               <div>
-                                <span className="text-sm font-medium text-muted-foreground block mb-2">{t('assessment.clinical_recommendation')}:</span>
-                                <p className="text-foreground bg-white/50 rounded p-3 border border-primary/10">
+                                <span className="text-sm font-medium text-muted-foreground block mb-2">
+                                  {t('assessment.clinical_recommendation')}:
+                                </span>
+                                <div
+                                  style={{
+                                    display: 'block',
+                                    height: 'auto',
+                                    overflow: 'visible',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                    lineHeight: '1.7',
+                                  }}
+                                  className="text-sm text-foreground bg-white/60 rounded-lg p-4 border border-primary/15 w-full"
+                                >
                                   {assessment.prediction.recommendation}
-                                </p>
+                                </div>
                               </div>
 
                               <div className="text-xs text-muted-foreground pt-2 border-t border-primary/20">

@@ -11,7 +11,7 @@ export class AssessmentController {
 
   @Post()
   create(@Body() createAssessmentDto: CreateAssessmentDto, @Req() req) {
-    return this.assessmentService.create(createAssessmentDto, req.user.userId);
+    return this.assessmentService.create(createAssessmentDto, req.user);
   }
 
   @Get()

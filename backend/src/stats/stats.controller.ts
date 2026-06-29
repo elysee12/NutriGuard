@@ -25,4 +25,17 @@ export class StatsController {
     }
     return null;
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('detailed')
+  async getDetailedStats(@Req() req) {
+    const user = req.user;
+    // Allow both Admin and Nurse to access detailed statistics
+    if (user.role === UserRole.ADMIN) {
+      return this.statsService.getDetailedStats(undefined);
+    } else if (user.role === UserRole.NURSE) {
+      return this.statsService.getDetailedStats(user.userId);
+    }
+    return null;
+  }
 }

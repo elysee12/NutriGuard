@@ -3,10 +3,27 @@ import { PageHeader } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SelectWithIcon } from "@/components/ui/select-with-icon";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { 
+  AlertTriangle, 
+  CheckCircle, 
+  User, 
+  Calendar, 
+  Ruler, 
+  Weight, 
+  Activity,
+  Users2,
+  GraduationCap,
+  Briefcase,
+  Droplet,
+  Utensils,
+  Baby,
+  HandHeart,
+  Home
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import { useTranslation } from "react-i18next";
@@ -276,11 +293,16 @@ export default function CHWAssessments() {
           title={t('assessment.title')}
           description="Select a registered child and submit assessment details for ML prediction"
         />
-        <form onSubmit={handleSubmit} className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
-          <div className="space-y-2">
-            <Label>{t('dashboard.child')}</Label>
-            <select
-              className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+        <form onSubmit={handleSubmit} className="bg-card rounded-xl border border-emerald-100 shadow-lg p-8 space-y-8">
+          {/* Child Selection */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <User className="h-4 w-4 text-emerald-600" />
+              {t('dashboard.child')}
+            </Label>
+            <SelectWithIcon
+              icon={<User className="h-4 w-4" />}
+              className="h-12"
               value={form.childId}
               onChange={(e) => handleChildChange(Number(e.target.value))}
               required
@@ -291,25 +313,34 @@ export default function CHWAssessments() {
                   {child.name} — {child.district}/{child.sector}/{child.cell}
                 </option>
               ))}
-            </select>
+            </SelectWithIcon>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>{t('common.gender')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          {/* Basic Info */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Users2 className="h-4 w-4 text-emerald-600" />
+                {t('common.gender')}
+              </Label>
+              <SelectWithIcon
+                icon={<Users2 className="h-4 w-4" />}
+                className="h-12"
                 value={form.gender}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
                 <option value="M">{t('assessment.male')}</option>
                 <option value="F">{t('assessment.female')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
-            <div className="space-y-2">
-              <Label>{t('common.dob')}</Label>
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-emerald-600" />
+                {t('common.dob')}
+              </Label>
               <Input
                 type="date"
+                icon={<Calendar className="h-4 w-4" />}
                 className="h-12"
                 value={form.childDob}
                 onChange={(e) => setForm({ ...form, childDob: e.target.value })}
@@ -318,20 +349,29 @@ export default function CHWAssessments() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t('assessment.age_days')}</Label>
+          {/* Demographics */}
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-emerald-600" />
+                {t('assessment.age_days')}
+              </Label>
               <Input
                 type="text"
-                className="h-12"
+                icon={<Activity className="h-4 w-4" />}
+                className="h-12 bg-emerald-50"
                 value={ageDays !== "" ? `${ageDays} days` : "Enter date of birth"}
                 readOnly
               />
             </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.mother_education')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-emerald-600" />
+                {t('assessment.mother_education')}
+              </Label>
+              <SelectWithIcon
+                icon={<GraduationCap className="h-4 w-4" />}
+                className="h-12"
                 value={form.amashuri_mama_w_umwana_yiz}
                 onChange={(e) => setForm({ ...form, amashuri_mama_w_umwana_yiz: e.target.value })}
               >
@@ -340,12 +380,16 @@ export default function CHWAssessments() {
                     {option}
                   </option>
                 ))}
-              </select>
+              </SelectWithIcon>
             </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.caregiver_occupation')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-emerald-600" />
+                {t('assessment.caregiver_occupation')}
+              </Label>
+              <SelectWithIcon
+                icon={<Briefcase className="h-4 w-4" />}
+                className="h-12"
                 value={form.icyo_umurera_akora}
                 onChange={(e) => setForm({ ...form, icyo_umurera_akora: e.target.value })}
               >
@@ -354,162 +398,239 @@ export default function CHWAssessments() {
                     {option}
                   </option>
                 ))}
-              </select>
+              </SelectWithIcon>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t('assessment.height_cm')}</Label>
-              <Input
-                type="number"
-                step="0.1"
-                className="h-12"
-                placeholder="e.g. 78.0"
-                value={form.height}
-                onChange={(e) => setForm({ ...form, height: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.weight_kg')}</Label>
-              <Input
-                type="number"
-                step="0.1"
-                className="h-12"
-                placeholder="e.g. 9.2"
-                value={form.weight}
-                onChange={(e) => setForm({ ...form, weight: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.muac_mm')}</Label>
-              <Input
-                type="number"
-                step="0.1"
-                className="h-12"
-                placeholder="e.g. 140"
-                value={form.muac}
-                onChange={(e) => setForm({ ...form, muac: e.target.value })}
-                required
-              />
+          {/* Measurements */}
+          <div className="bg-emerald-50 rounded-lg p-6 space-y-6">
+            <h3 className="font-display text-lg font-semibold text-emerald-900 flex items-center gap-2">
+              <Ruler className="h-5 w-5" />
+              Physical Measurements
+            </h3>
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Ruler className="h-4 w-4 text-emerald-600" />
+                  {t('assessment.height_cm')}
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  icon={<Ruler className="h-4 w-4" />}
+                  className="h-12 bg-white"
+                  placeholder="e.g. 78.0"
+                  value={form.height}
+                  onChange={(e) => setForm({ ...form, height: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Weight className="h-4 w-4 text-emerald-600" />
+                  {t('assessment.weight_kg')}
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  icon={<Weight className="h-4 w-4" />}
+                  className="h-12 bg-white"
+                  placeholder="e.g. 9.2"
+                  value={form.weight}
+                  onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-600" />
+                  {t('assessment.muac_mm')}
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  icon={<Activity className="h-4 w-4" />}
+                  className="h-12 bg-white"
+                  placeholder="e.g. 140"
+                  value={form.muac}
+                  onChange={(e) => setForm({ ...form, muac: e.target.value })}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t('assessment.parents_present')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          {/* Family & Health */}
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Users2 className="h-4 w-4 text-emerald-600" />
+                {t('assessment.parents_present')}
+              </Label>
+              <SelectWithIcon
+                icon={<Users2 className="h-4 w-4" />}
+                className="h-12"
                 value={form.umwana_afite_ababyeyi}
                 onChange={(e) => setForm({ ...form, umwana_afite_ababyeyi: e.target.value })}
               >
                 <option value="Yego">{t('assessment.yes')}</option>
                 <option value="Oya">{t('assessment.no')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.recent_illness')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-emerald-600" />
+                {t('assessment.recent_illness')}
+              </Label>
+              <SelectWithIcon
+                icon={<AlertTriangle className="h-4 w-4" />}
+                className="h-12"
                 value={form.sick}
                 onChange={(e) => setForm({ ...form, sick: e.target.value })}
               >
                 <option value="Yego">{t('assessment.yes')}</option>
                 <option value="Oya">{t('assessment.no')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.meal_frequency')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Utensils className="h-4 w-4 text-emerald-600" />
+                {t('assessment.meal_frequency')}
+              </Label>
+              <SelectWithIcon
+                icon={<Utensils className="h-4 w-4" />}
+                className="h-12"
                 value={form.mmf}
                 onChange={(e) => setForm({ ...form, mmf: e.target.value })}
               >
                 <option value="Yego">{t('assessment.yes')}</option>
                 <option value="Oya">{t('assessment.no')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t('assessment.breastfeeding')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          {/* Nutrition & Support */}
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Baby className="h-4 w-4 text-emerald-600" />
+                {t('assessment.breastfeeding')}
+              </Label>
+              <SelectWithIcon
+                icon={<Baby className="h-4 w-4" />}
+                className="h-12"
                 value={form.fbf}
                 onChange={(e) => setForm({ ...form, fbf: e.target.value })}
               >
                 <option value="Yego">{t('assessment.yes')}</option>
                 <option value="Oya">{t('assessment.no')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.vup_participation')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <HandHeart className="h-4 w-4 text-emerald-600" />
+                {t('assessment.vup_participation')}
+              </Label>
+              <SelectWithIcon
+                icon={<HandHeart className="h-4 w-4" />}
+                className="h-12"
                 value={form.vup}
                 onChange={(e) => setForm({ ...form, vup: e.target.value })}
               >
                 <option value="Yego">{t('assessment.yes')}</option>
                 <option value="Oya">{t('assessment.no')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.household_conflict')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Home className="h-4 w-4 text-emerald-600" />
+                {t('assessment.household_conflict')}
+              </Label>
+              <SelectWithIcon
+                icon={<Home className="h-4 w-4" />}
+                className="h-12"
                 value={form.ese_haba_hari_amakimbirane}
                 onChange={(e) => setForm({ ...form, ese_haba_hari_amakimbirane: e.target.value })}
               >
                 <option value="Yego">{t('assessment.yes')}</option>
                 <option value="Oya">{t('assessment.no')}</option>
-              </select>
+              </SelectWithIcon>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t('assessment.safe_water')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                value={form.water}
-                onChange={(e) => setForm({ ...form, water: e.target.value })}
-              >
-                <option value="Yego">{t('assessment.yes')}</option>
-                <option value="Oya">{t('assessment.no')}</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.handwashing_facility')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                value={form.handwash}
-                onChange={(e) => setForm({ ...form, handwash: e.target.value })}
-              >
-                <option value="Yego">{t('assessment.yes')}</option>
-                <option value="Oya">{t('assessment.no')}</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('assessment.toilet_access')}</Label>
-              <select
-                className="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                value={form.toilet}
-                onChange={(e) => setForm({ ...form, toilet: e.target.value })}
-              >
-                <option value="Yego">{t('assessment.yes')}</option>
-                <option value="Oya">{t('assessment.no')}</option>
-              </select>
+          {/* WASH Indicators */}
+          <div className="bg-blue-50 rounded-lg p-6 space-y-6">
+            <h3 className="font-display text-lg font-semibold text-blue-900 flex items-center gap-2">
+              <Droplet className="h-5 w-5" />
+              Water, Sanitation & Hygiene
+            </h3>
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Droplet className="h-4 w-4 text-blue-600" />
+                  {t('assessment.safe_water')}
+                </Label>
+                <SelectWithIcon
+                  icon={<Droplet className="h-4 w-4" />}
+                  className="h-12 bg-white"
+                  value={form.water}
+                  onChange={(e) => setForm({ ...form, water: e.target.value })}
+                >
+                  <option value="Yego">{t('assessment.yes')}</option>
+                  <option value="Oya">{t('assessment.no')}</option>
+                </SelectWithIcon>
+              </div>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <HandHeart className="h-4 w-4 text-blue-600" />
+                  {t('assessment.handwashing_facility')}
+                </Label>
+                <SelectWithIcon
+                  icon={<HandHeart className="h-4 w-4" />}
+                  className="h-12 bg-white"
+                  value={form.handwash}
+                  onChange={(e) => setForm({ ...form, handwash: e.target.value })}
+                >
+                  <option value="Yego">{t('assessment.yes')}</option>
+                  <option value="Oya">{t('assessment.no')}</option>
+                </SelectWithIcon>
+              </div>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-blue-600" />
+                  {t('assessment.toilet_access')}
+                </Label>
+                <SelectWithIcon
+                  icon={<Home className="h-4 w-4" />}
+                  className="h-12 bg-white"
+                  value={form.toilet}
+                  onChange={(e) => setForm({ ...form, toilet: e.target.value })}
+                >
+                  <option value="Yego">{t('assessment.yes')}</option>
+                  <option value="Oya">{t('assessment.no')}</option>
+                </SelectWithIcon>
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" className="flex-1 h-12 font-semibold" disabled={submitting}>
-            {submitting ? t('common.loading') : t('assessment.submit_button')}
-          </Button>
-            <Button type="button" variant="outline" className="h-12" onClick={() => navigate("/chw")}>{t('common.cancel')}</Button>
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
+            <Button 
+              type="submit" 
+              className="flex-1 h-12 text-base font-semibold shadow-md hover:shadow-lg" 
+              disabled={submitting}
+            >
+              <CheckCircle className="h-5 w-5" />
+              {submitting ? t('common.loading') : t('assessment.submit_button')}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="h-12 px-6" 
+              onClick={() => navigate("/chw")}
+            >
+              {t('common.cancel')}
+            </Button>
           </div>
         </form>
       </div>

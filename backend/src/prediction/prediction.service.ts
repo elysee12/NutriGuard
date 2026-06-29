@@ -1,88 +1,150 @@
-import { Injectable, NotFoundException, InternalServerErrorException, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, Logger, ForbiddenException, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import { join } from 'path';
 
 @Injectable()
-export class PredictionService {
+export class PredictionService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PredictionService.name);
+  private pythonProcess: ChildProcess | null = null;
+  private predictionQueue: Array<{ input: any; resolve: Function; reject: Function }> = [];
+  private isProcessing = false;
 
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Iyi method ihamagara predict.py ikoresheje Python3.
-   * Kubera ko twakuye "backend" mu Root Directory ya Render, 
-   * 'process.cwd()' ubu iri kureba mu mizi (root) y'umushinga.
-   */
-  async runPrediction(inputData: any) {
+  onModuleInit() {
+    this.startPythonProcess();
+  }
+
+  onModuleDestroy() {
+    this.stopPythonProcess();
+  }
+
+  private startPythonProcess() {
     const isWindows = process.platform === 'win32';
-    
-    // Inzira ya script: default ni '../predict.py' kuko turi muri 'backend' folder
     const scriptPath = process.env.PYTHON_SCRIPT_PATH || join(process.cwd(), '..', 'predict.py');
-    
-    // Inzira ya Python executable
-    let pythonPath = 'python3'; // Default kuri Render/Linux
+    let pythonPath = 'python3';
     
     if (process.env.PYTHON_PATH) {
       pythonPath = process.env.PYTHON_PATH;
     } else if (isWindows) {
-      // Local development kuri Windows
-      const venvPath = join(process.cwd(), '..', '.venv', 'Scripts', 'python.exe');
-      pythonPath = venvPath;
+      pythonPath = join(process.cwd(), '..', '.venv', 'Scripts', 'python.exe');
     }
 
-    this.logger.log(`Prediction execution details:`);
-    this.logger.log(`- Platform: ${process.platform}`);
-    this.logger.log(`- Current Working Dir: ${process.cwd()}`);
-    this.logger.log(`- Python Path: ${pythonPath}`);
-    this.logger.log(`- Script Path: ${scriptPath}`);
+    this.logger.log(`Starting persistent Python process with model...`);
+    this.pythonProcess = spawn(pythonPath, [scriptPath, '--persistent']);
 
-    return new Promise((resolve, reject) => {
-      const pythonProcess = spawn(pythonPath, [scriptPath]);
-
-      let result = '';
-      let errorData = '';
-
-      pythonProcess.stdout.on('data', (data) => {
-        result += data.toString();
-      });
-
-      pythonProcess.stderr.on('data', (data) => {
-        errorData += data.toString();
-      });
-
-      pythonProcess.on('error', (err) => {
-        this.logger.error(`Failed to start Python process: ${err.message}`);
-        reject(new InternalServerErrorException(`Python process error: ${err.message}`));
-      });
-
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          this.logger.error(`Python exited with code ${code}. Error: ${errorData}`);
-          return reject(new InternalServerErrorException(`Python Script Error: ${errorData}`));
-        }
+    this.pythonProcess.stdout?.on('data', (data) => {
+      const output = data.toString().trim();
+      if (this.predictionQueue.length > 0) {
+        const { resolve, reject } = this.predictionQueue.shift()!;
         try {
-          if (!result.trim()) {
-            return reject(new InternalServerErrorException('Python script returned empty result'));
-          }
-
-          const parsedResult = JSON.parse(result.trim());
-          
-          if (parsedResult.error) {
-            this.logger.error(`Prediction Error from Python: ${parsedResult.error}`);
-            return reject(new InternalServerErrorException(parsedResult.error));
-          }
-
-          resolve(parsedResult);
+          const result = JSON.parse(output);
+          if (result.error) reject(new InternalServerErrorException(result.error));
+          else resolve(result);
         } catch (e) {
-          this.logger.error(`Failed to parse Python JSON. Raw output: ${result}`);
-          reject(new InternalServerErrorException('Invalid JSON output from Python script'));
+          reject(new InternalServerErrorException(`Failed to parse Python output: ${output}`));
         }
-      });
-
-      pythonProcess.stdin.write(JSON.stringify(inputData));
-      pythonProcess.stdin.end();
+        this.processNextInQueue();
+      }
     });
+
+    this.pythonProcess.stderr?.on('data', (data) => {
+      this.logger.error(`Python process error: ${data.toString()}`);
+    });
+
+    this.pythonProcess.on('close', (code) => {
+      this.logger.warn(`Python process exited with code ${code}. Restarting...`);
+      this.pythonProcess = null;
+      setTimeout(() => this.startPythonProcess(), 1000);
+    });
+  }
+
+  private stopPythonProcess() {
+    if (this.pythonProcess) {
+      this.pythonProcess.kill();
+      this.pythonProcess = null;
+    }
+  }
+
+  private processNextInQueue() {
+    if (this.predictionQueue.length > 0 && this.pythonProcess && this.pythonProcess.stdin) {
+      const { input } = this.predictionQueue[0];
+      this.pythonProcess.stdin.write(JSON.stringify(input) + '\n');
+    } else {
+      this.isProcessing = false;
+    }
+  }
+
+  async runPrediction(inputData: any): Promise<{ prediction: string; risk_score: number; recommendation: string }> {
+    const predictionResult: any = await new Promise((resolve, reject) => {
+      this.predictionQueue.push({ input: inputData, resolve, reject });
+      if (!this.isProcessing) {
+        this.isProcessing = true;
+        this.processNextInQueue();
+      }
+    });
+
+    const recommendation = this.generateRecommendations(inputData, predictionResult.prediction);
+
+    return {
+      ...predictionResult,
+      recommendation,
+    };
+  }
+
+  private generateRecommendations(features: any, prediction: string): string {
+    const recs: string[] = [];
+
+    // Base prediction message
+    if (prediction === 'Stunted') {
+      recs.push("Immediate nutritional intervention is required.");
+    } else {
+      recs.push("Child growth is currently on track, but continuous care is needed.");
+    }
+
+    // 1. MUAC - The most critical indicator for acute malnutrition
+    if (features.muac < 11.5) {
+      recs.push("URGENT: MUAC is dangerously low (<11.5cm), indicating Severe Acute Malnutrition (SAM). Immediate referral to a health center for therapeutic food (RUTF) is mandatory.");
+    } else if (features.muac < 12.5) {
+      recs.push("MUAC is low (11.5-12.5cm), indicating Moderate Acute Malnutrition (MAM). Increase protein-rich foods and monitor weekly.");
+    }
+
+    // 2. Health & Illness
+    if (features.sick === 'Yego') {
+      recs.push("Address the recent illness immediately; infection is a major driver of stunting. Ensure the child completes any prescribed medication.");
+    }
+
+    // 3. Nutrition Practices
+    if (features.fbf === 'Oya' && features.age_days < 180) {
+      recs.push("For children under 6 months, ensure exclusive breastfeeding. Avoid giving other liquids or solids.");
+    }
+    if (features.mmf === 'Oya') {
+      recs.push("Increase meal frequency. The child needs at least 3-4 diverse meals daily to meet energy requirements.");
+    }
+
+    // 4. WASH (Water, Sanitation, Hygiene) - Prevents diarrhea and nutrient loss
+    if (features.water === 'Oya') {
+      recs.push("Treat all drinking water (boil or use Sur'Eau). Waterborne diseases directly contribute to nutrient malabsorption.");
+    }
+    if (features.handwash === 'Oya' || features.toilet === 'Oya') {
+      recs.push("Strictly enforce handwashing with soap and ensure use of a clean toilet to prevent fecal-oral transmission of parasites.");
+    }
+
+    // 5. Socio-economic & Psychosocial
+    if (features.ese_haba_hari_amakimbirane === 'Yego') {
+      recs.push("Psychosocial support for caregivers is needed. Household conflict increases child stress levels, which can inhibit growth hormones.");
+    }
+    if (features.vup === 'Oya') {
+      recs.push("Verify if the family is eligible for VUP or other social protection programs to improve food security.");
+    }
+
+    // 6. Caregiver Context
+    if (features.amashuri_mama_w_umwana_yiz === 'Ntago yize') {
+      recs.push("Provide targeted nutrition education to the mother, focusing on balanced diet preparation using locally available foods.");
+    }
+
+    return recs.join(' ');
   }
 
   async findAll(user: any) {

@@ -36,6 +36,7 @@ model User {
   assessments     Assessment[]
   logs            SystemLog[]
   children        Child[]       @relation("CHWChildren")
+  province        String?
   district        String?
   sector          String?
   cell            String?
@@ -46,6 +47,11 @@ model HealthCenter {
   id              Int           @id @default(autoincrement())
   name            String        @unique
   location        String
+  province        String?
+  district        String?
+  sector          String?
+  cell            String?
+  village         String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   users           User[]
@@ -59,6 +65,7 @@ model Child {
   dob             DateTime
   gender          String
   motherName      String
+  province        String?
   district        String
   sector          String
   cell            String

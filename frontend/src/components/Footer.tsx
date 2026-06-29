@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col items-center justify-center gap-4 text-sm text-muted-foreground">
           <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            <span>© {currentYear} NutriGuard Ltd. All Rights Reserved.</span>
+            <span>© {currentYear} e-KuraNeza Kibondo. All Rights Reserved.</span>
             <span className="hidden md:inline opacity-20">|</span>
             <Link to="#" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <span className="hidden md:inline opacity-20">|</span>

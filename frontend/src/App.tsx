@@ -24,6 +24,8 @@ import AdminCenters from "@/pages/admin/AdminCenters";
 import AdminStats from "@/pages/admin/AdminStats";
 import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminReports from "@/pages/admin/AdminReports";
+import StatisticsPage from "@/pages/StatisticsPage";
 import NotFound from "./pages/NotFound";
 import AuthLayout from "@/components/AuthLayout";
 
@@ -62,16 +64,20 @@ function AppRoutes() {
       <Route path="/nurse" element={<NurseDashboard />} />
       <Route path="/nurse/register-child" element={<NurseRegisterChild />} />
       <Route path="/nurse/assessments" element={<NurseAssessments />} />
+      <Route path="/nurse/assessments/new" element={<CHWAssessments />} />
       <Route path="/nurse/assessments/:id" element={<NurseAssessmentView />} />
       <Route path="/nurse/chw" element={<NurseCHWMonitoring />} />
       <Route path="/nurse/reports" element={<NurseReports />} />
+      <Route path="/nurse/statistics" element={<StatisticsPage />} />
       {/* Admin */}
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/users" element={<AdminUsers />} />
       <Route path="/admin/centers" element={<AdminCenters />} />
+      <Route path="/admin/reports" element={<AdminReports />} />
       <Route path="/admin/stats" element={<AdminStats />} />
       <Route path="/admin/logs" element={<AdminLogs />} />
       <Route path="/admin/settings" element={<AdminSettings />} />
+      <Route path="/admin/statistics" element={<StatisticsPage />} />
       <Route path="*" element={<AuthLayout><NotFound /></AuthLayout>} />
     </Routes>
   );

@@ -3,12 +3,14 @@ import { PageHeader, RiskBadge } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ExportButton } from "@/components/ExportButton";
 import { Download, Filter, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
-import { groupWithRowspan } from "@/lib/utils";
+import { getLatestPerChild, groupWithRowspan, formatSubmittedBy } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { Search } from "lucide-react";
 
 interface AssessmentRecord {
   id: number;
@@ -18,6 +20,7 @@ interface AssessmentRecord {
   muac: number;
   status: string;
   child: {
+    id: number;
     name: string;
     dob: string;
     sector?: string;
@@ -28,17 +31,25 @@ interface AssessmentRecord {
   prediction?: { result: string; riskLevel: "low" | "moderate" | "high"; riskScore: number };
 }
 
-type DateFilterType = "today" | "week" | "month" | "year" | "custom";
+interface ChildRecord {
+  id: number;
+  name: string;
+  motherName: string;
+  village: string;
+}
+
+type DateFilterType = "today" | "week" | "month" | "year" | "custom" | "all";
 
 export default function NurseReports() {
   const { token } = useAuth();
   const { t } = useTranslation();
   const [assessments, setAssessments] = useState<AssessmentRecord[]>([]);
+  const [children, setChildren] = useState<ChildRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(true);
 
   // Date filtering
-  const [dateFilterType, setDateFilterType] = useState<DateFilterType>("month");
+  const [dateFilterType, setDateFilterType] = useState<DateFilterType>("all");
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
 
@@ -47,30 +58,44 @@ export default function NurseReports() {
   const [cell, setCell] = useState("");
   const [village, setVillage] = useState("");
 
-  // Load assessments from backend
+  // Child filtering
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+
+  // Load data from backend
   useEffect(() => {
-    const loadAssessments = async () => {
+    const loadData = async () => {
       if (!token) return;
       setLoading(true);
 
       try {
-        const response = await fetch(`${API_URL}/assessment`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) {
-          throw new Error('Unable to load assessments');
+        const [assessmentsRes, childrenRes] = await Promise.all([
+          fetch(`${API_URL}/assessment`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/child`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (assessmentsRes.ok) {
+          const data = await assessmentsRes.json();
+          setAssessments(data);
         }
-        const data = await response.json();
-        setAssessments(data);
+
+        if (childrenRes.ok) {
+          const data = await childrenRes.json();
+          setChildren(data);
+        }
       } catch (error) {
-        console.error('Failed to load assessments:', error);
-        setAssessments([]);
+        console.error('Failed to load data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadAssessments();
+    loadData();
   }, [API_URL, token]);
 
   // Extract unique sectors, cells, villages from assessments
@@ -139,23 +164,42 @@ export default function NurseReports() {
     }
   };
 
-  // Filter assessments by date and location
+  // Filter assessments by date, location, and child
   const filteredAssessments = useMemo(() => {
     const [dateStart, dateEnd] = getDateRange();
 
     return assessments.filter((a) => {
-      const assessmentDate = new Date(a.date);
-      if (assessmentDate < dateStart || assessmentDate > dateEnd) return false;
+      // Date filter (only if not "all")
+      if (dateFilterType !== "all") {
+        const assessmentDate = new Date(a.date);
+        if (assessmentDate < dateStart || assessmentDate > dateEnd) return false;
+      }
+
+      // Location filters
       if (sector && a.child.sector !== sector) return false;
       if (cell && a.child.cell !== cell) return false;
       if (village && a.child.village !== village) return false;
+
+      // Child filter
+      if (selectedChildId && a.child.id !== selectedChildId) return false;
+
       return true;
     });
-  }, [assessments, dateFilterType, customDateFrom, customDateTo, sector, cell, village]);
+  }, [assessments, dateFilterType, customDateFrom, customDateTo, sector, cell, village, selectedChildId]);
 
   const processedAssessments = useMemo(() => {
-    return groupWithRowspan(filteredAssessments, (a) => a.child.name);
-  }, [filteredAssessments]);
+    let data = filteredAssessments;
+
+    // If no specific child is selected, only show the latest assessment per child
+    if (!selectedChildId) {
+      data = getLatestPerChild(data);
+    } else {
+      // If a child is selected, show all their assessments sorted by date descending
+      data = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    return groupWithRowspan(data, (a) => a.child.name);
+  }, [filteredAssessments, selectedChildId]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -175,13 +219,24 @@ export default function NurseReports() {
     };
   }, [processedAssessments]);
 
+  // Filter children for search dropdown
+  const filteredChildrenList = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return children.filter(child =>
+      child.name.toLowerCase().includes(query)
+    );
+  }, [children, searchQuery]);
+
   const handleClearFilters = () => {
-    setDateFilterType("month");
+    setDateFilterType("all");
     setCustomDateFrom("");
     setCustomDateTo("");
     setSector("");
     setCell("");
     setVillage("");
+    setSelectedChildId(null);
+    setSearchQuery("");
   };
 
   return (
@@ -191,10 +246,30 @@ export default function NurseReports() {
           title={t('assessment.assessment_reports')}
           description="View and analyze assessment data from your health center"
           actions={
-            <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="h-4 w-4 mr-2" />
-              {showFilters ? t('assessment.hide_filters') : t('assessment.show_filters')}
-            </Button>
+            <div className="flex gap-2">
+              {!loading && processedAssessments.length > 0 && (
+                <ExportButton
+                  data={processedAssessments.map(a => ({
+                    'Child Name': a.child.name,
+                    'Date': new Date(a.date).toLocaleDateString(),
+                    'Location': [a.child.sector, a.child.cell, a.child.village].filter(Boolean).join(' / '),
+                    'Submitted By': a.chw ? formatSubmittedBy(a.chw) : 'N/A',
+                    'Height (cm)': a.height,
+                    'Weight (kg)': a.weight,
+                    'MUAC': a.muac,
+                    'ML Prediction': a.prediction?.result || t('dashboard.pending'),
+                    'Risk Level': a.prediction?.riskLevel || 'low',
+                    'Status': a.status === 'REVIEWED' ? t('dashboard.reviewed') : t('dashboard.pending')
+                  }))}
+                  filename="assessment_reports"
+                  title="Assessment Reports"
+                />
+              )}
+              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+                <Filter className="h-4 w-4 mr-2" />
+                {showFilters ? t('assessment.hide_filters') : t('assessment.show_filters')}
+              </Button>
+            </div>
           }
         />
 
@@ -205,8 +280,8 @@ export default function NurseReports() {
               {/* Date Filtering */}
               <div>
                 <h3 className="font-semibold text-foreground mb-3">{t('assessment.date_range')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
-                  {(["today", "week", "month", "year", "custom"] as DateFilterType[]).map((type) => (
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4">
+                  {(["all", "today", "week", "month", "year", "custom"] as DateFilterType[]).map((type) => (
                     <button
                       key={type}
                       onClick={() => setDateFilterType(type)}
@@ -216,6 +291,7 @@ export default function NurseReports() {
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
+                      {type === "all" && t('assessment.all')}
                       {type === "today" && t('assessment.today')}
                       {type === "week" && t('assessment.this_week')}
                       {type === "month" && t('assessment.this_month')}
@@ -227,7 +303,7 @@ export default function NurseReports() {
 
                 {/* Custom date range */}
                 {dateFilterType === "custom" && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="space-y-2">
                       <Label>{t('assessment.from')}</Label>
                       <Input
@@ -248,6 +324,59 @@ export default function NurseReports() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Child Selection */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-3">{t('common.child')} Filter</h3>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Search for a child to view history..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setSearchDropdownOpen(true);
+                    }}
+                    onFocus={() => setSearchDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setSearchDropdownOpen(false), 200)}
+                  />
+                  {selectedChildId && (
+                    <button
+                      onClick={() => {
+                        setSelectedChildId(null);
+                        setSearchQuery("");
+                      }}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+
+                  {/* Search Dropdown */}
+                  {searchDropdownOpen && filteredChildrenList.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredChildrenList.map(child => (
+                        <div
+                          key={child.id}
+                          className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                          onClick={() => {
+                            setSelectedChildId(child.id);
+                            setSearchQuery(child.name);
+                            setSearchDropdownOpen(false);
+                          }}
+                        >
+                          <p className="font-medium text-sm">{child.name}</p>
+                          <p className="text-xs text-muted-foreground">{child.motherName} • {child.village}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Location Filtering */}
@@ -356,18 +485,18 @@ export default function NurseReports() {
         ) : (
           <div className="bg-card rounded-xl border shadow-sm overflow-x-auto">
             <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('common.child')}</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('common.date')}</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('location.location_title')}</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">CHW</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">H (cm)</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">W (kg)</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">MUAC</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('dashboard.ml_prediction')}</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('dashboard.risk_level')}</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t('common.status')}</th>
+              <thead className="table-header">
+                <tr>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('common.child')}</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('common.date')}</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('location.location_title')}</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">Submitted By</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">H (cm)</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">W (kg)</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">MUAC</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('dashboard.ml_prediction')}</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('dashboard.risk_level')}</th>
+                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('common.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -382,7 +511,7 @@ export default function NurseReports() {
                     <td className="p-4 text-sm text-muted-foreground">
                       {[a.child.sector, a.child.cell, a.child.village].filter(Boolean).join(" / ")}
                     </td>
-                    <td className="p-4 text-sm text-muted-foreground">{a.chw?.name || "N/A"}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{a.chw ? formatSubmittedBy(a.chw) : "N/A"}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.height}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.weight}</td>
                     <td className="p-4 text-sm text-muted-foreground">{a.muac}</td>

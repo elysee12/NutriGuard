@@ -244,10 +244,10 @@ export default function AdminUsers() {
         ) : (
           <div className="bg-card rounded-xl border shadow-sm overflow-x-auto">
             <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
+              <thead className="table-header">
+                <tr>
                   {[t('common.name'), t('common.email'), t('common.role'), t('common.status'), t('common.health_center'), t('common.actions')].map((h) => (
-                    <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
+                    <th key={h} className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>

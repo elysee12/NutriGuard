@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ChildDetailsModal from "@/components/ChildDetailsModal";
 import { API_URL } from "@/lib/api";
-import { groupWithRowspan } from "@/lib/utils";
+import { groupWithRowspan, getLatestPerChild } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 interface ResultRecord {
@@ -57,9 +57,14 @@ export default function CHWResults() {
     loadResults();
   }, [API_URL, token, user?.id, user?.role, t]);
 
-  const processedResults = useMemo(() => {
-    return groupWithRowspan(results, (r) => r.child.id);
+  // Only keep the latest assessment per child for the main view
+  const latestResults = useMemo(() => {
+    return getLatestPerChild(results);
   }, [results]);
+
+  const processedResults = useMemo(() => {
+    return latestResults.map(r => ({ ...r, isFirst: true, rowspan: 1 }));
+  }, [latestResults]);
 
   const calculateAge = (dob: string) => {
     const diff = new Date().getTime() - new Date(dob).getTime();
@@ -129,10 +134,10 @@ export default function CHWResults() {
           {/* Desktop View: Table */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
+              <thead className="table-header">
+                <tr>
                   {[t('dashboard.child'), t('dashboard.age'), t('common.date'), t('dashboard.risk_level'), t('dashboard.score'), t('common.status'), t('common.actions')].map((h) => (
-                    <th key={h} className="text-left p-4 text-sm font-medium text-muted-foreground">{h}</th>
+                    <th key={h} className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -152,11 +157,9 @@ export default function CHWResults() {
                 ) : (
                   processedResults.map((r) => (
                     <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      {r.isFirst && (
-                        <td className="p-4 text-sm font-medium text-foreground align-top" rowSpan={r.rowspan}>
-                          {r.child.name}
-                        </td>
-                      )}
+                      <td className="p-4 text-sm font-medium text-foreground align-top">
+                        {r.child.name}
+                      </td>
                       <td className="p-4 text-sm text-muted-foreground">{calculateAge(r.child.dob)}</td>
                       <td className="p-4 text-sm text-muted-foreground">{new Date(r.date).toLocaleDateString()}</td>
                       <td className="p-4">

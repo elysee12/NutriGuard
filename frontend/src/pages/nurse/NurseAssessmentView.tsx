@@ -111,7 +111,7 @@ export default function NurseAssessmentView() {
                 </div>
                 <div className="pt-2">
                   <p className="text-muted-foreground font-semibold mb-1">{t('assessment.recommendation')}:</p>
-                  <p className="text-sm bg-muted/50 p-3 rounded-md">{assessment.prediction.recommendation}</p>
+                  <p className="text-sm bg-muted/50 p-4 rounded-lg border border-border whitespace-pre-wrap break-words leading-relaxed w-full">{assessment.prediction.recommendation}</p>
                 </div>
               </div>
             </div>

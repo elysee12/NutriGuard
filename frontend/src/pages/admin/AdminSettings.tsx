@@ -42,11 +42,11 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="system-name">{t('admin.system_name')}</Label>
-                <Input id="system-name" defaultValue="NutriGuard Rwanda" />
+                <Input id="system-name" defaultValue="e-KuraNeza Kibondo" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="support-email">{t('admin.support_email')}</Label>
-                <Input id="support-email" type="email" defaultValue="support@nutriguard.gov.rw" />
+                <Input id="support-email" type="email" defaultValue="support@ekuraneza.gov.rw" />
               </div>
             </CardContent>
           </Card>

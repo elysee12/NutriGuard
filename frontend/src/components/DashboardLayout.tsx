@@ -34,7 +34,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       { label: t("nav.dashboard"), icon: <LayoutDashboard className="h-5 w-5" />, path: "/admin" },
       { label: t("nav.approve_users", "Approve Users"), icon: <UserCheck className="h-5 w-5" />, path: "/admin/users" },
       { label: t("nav.health_centers", "Health Centers"), icon: <Building2 className="h-5 w-5" />, path: "/admin/centers" },
-      { label: t("nav.statistics", "Statistics"), icon: <BarChart3 className="h-5 w-5" />, path: "/admin/stats" },
+      { label: t("nav.reports", "System Reports"), icon: <FileText className="h-5 w-5" />, path: "/admin/reports" },
+      { label: t("nav.statistics", "Statistics"), icon: <BarChart3 className="h-5 w-5" />, path: "/admin/statistics" },
       { label: t("nav.system_logs", "System Logs"), icon: <Activity className="h-5 w-5" />, path: "/admin/logs" },
       { label: t("nav.settings", "Settings"), icon: <Settings className="h-5 w-5" />, path: "/admin/settings" },
     ],
@@ -44,6 +45,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       { label: t("nav.assessments"), icon: <ClipboardList className="h-5 w-5" />, path: "/nurse/assessments" },
       { label: t("nav.chw_monitoring"), icon: <Users className="h-5 w-5" />, path: "/nurse/chw" },
       { label: t("nav.reports"), icon: <FileText className="h-5 w-5" />, path: "/nurse/reports" },
+      { label: t("nav.statistics", "Statistics"), icon: <BarChart3 className="h-5 w-5" />, path: "/nurse/statistics" },
     ],
     CHW: [
       { label: t("nav.dashboard"), icon: <LayoutDashboard className="h-5 w-5" />, path: "/chw" },
@@ -71,8 +73,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="NutriGuard logo" className="h-8 w-8 rounded-lg object-contain" />
-          <span className="font-display text-lg font-bold text-sidebar-primary-foreground">NutriGuard</span>
+          <img src={logo} alt="e-KuraNeza Kibondo logo" className="h-8 w-8 rounded-lg object-contain" />
+          <span className="font-display text-base font-bold text-sidebar-primary-foreground">e-KuraNeza Kibondo</span>
         </div>
         <div className="flex items-center gap-4">
           <LanguageSelector className="scale-75 origin-right" />
@@ -96,7 +98,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       />
 
       <aside
-        className={`bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-50 fixed lg:static inset-y-0 left-0 ${
+        className={`bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-50 fixed lg:static inset-y-0 left-0 border-r border-sidebar-border ${
           collapsed ? "w-20" : "w-64"
         } ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -105,18 +107,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Sidebar Header */}
         <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 min-w-[2.25rem] rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <img src={logo} alt="NutriGuard logo" className="h-5 w-5 object-contain" />
+            <div className="h-10 w-10 min-w-[2.5rem] rounded-xl bg-gradient-to-br from-sidebar-primary to-info shadow-lg flex items-center justify-center">
+              <img src={logo} alt="e-KuraNeza Kibondo logo" className="h-6 w-6 object-contain" />
             </div>
             {(!collapsed || mobileMenuOpen) && (
-              <span className="font-display text-lg font-bold text-sidebar-primary-foreground">NutriGuard</span>
+              <span className="font-display text-base font-bold text-sidebar-primary-foreground">e-KuraNeza Kibondo</span>
             )}
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden text-sidebar-foreground"
+            className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -130,9 +132,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   active
-                    ? "bg-sidebar-accent text-sidebar-primary"
+                    ? "bg-gradient-to-r from-sidebar-primary to-info text-white shadow-md"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 }`}
               >
@@ -158,20 +160,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {(!collapsed || mobileMenuOpen) ? (
             <button
               onClick={() => setShowProfileModal(true)}
-              className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 hover:from-emerald-500/20 hover:to-emerald-600/20 border border-emerald-200 transition-all duration-200"
+              className="w-full px-3 py-3 rounded-xl bg-gradient-to-br from-sidebar-primary/20 to-info/10 hover:from-sidebar-primary/30 hover:to-info/20 border border-sidebar-primary/30 transition-all duration-200 hover:shadow-md"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-white">
-                  <User className="h-4 w-4" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-sidebar-primary to-info flex items-center justify-center text-white shadow-md">
+                  <User className="h-5 w-5" />
                 </div>
-                <div className="text-left overflow-hidden">
-                  <p className="text-xs text-emerald-800 font-bold uppercase tracking-tight truncate">{t('nav.logged_in_as')}</p>
-                  <p className="text-sm text-sidebar-primary-foreground font-bold truncate leading-tight">{user.name}</p>
+                <div className="text-left overflow-hidden flex-1">
+                  <p className="text-xs text-sidebar-primary font-bold uppercase tracking-tight truncate">{t('nav.logged_in_as')}</p>
+                  <p className="text-sm text-sidebar-foreground font-bold truncate leading-tight">{user.name}</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[10px] text-emerald-700 font-medium">
-                <span>{user.role}</span>
-                <span className="flex items-center gap-0.5 hover:text-emerald-900 transition-colors">
+              <div className="flex items-center justify-between text-[10px] text-sidebar-foreground/60 font-medium">
+                <span className="px-2 py-0.5 bg-sidebar-accent rounded-md">{user.role}</span>
+                <span className="flex items-center gap-0.5 hover:text-sidebar-primary transition-colors">
                   {t('nav.edit_profile')}
                 </span>
               </div>
@@ -179,7 +181,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           ) : (
             <button
               onClick={() => setShowProfileModal(true)}
-              className="w-full h-10 flex items-center justify-center rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
+              className="w-full h-11 flex items-center justify-center rounded-lg hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
               title={t('nav.edit_profile')}
             >
               <User className="h-5 w-5" />
@@ -188,7 +190,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200 ${
               collapsed && !mobileMenuOpen ? "justify-center" : ""
             }`}
           >
@@ -200,7 +202,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Collapse toggle (Desktop only) */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex p-3 border-t border-sidebar-border justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+          className="hidden lg:flex p-3 border-t border-sidebar-border justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

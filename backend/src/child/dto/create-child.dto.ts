@@ -18,6 +18,10 @@ export class CreateChildDto {
   motherName: string;
 
   @IsString()
+  @IsOptional()
+  province?: string;
+
+  @IsString()
   @IsNotEmpty()
   district: string;
 

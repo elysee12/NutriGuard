@@ -1,26 +1,25 @@
-import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
-import { spawn } from 'child_process';
-import * as path from 'path';
+import { PredictionService } from '../prediction/prediction.service';
 import { RiskLevel, AssessmentStatus } from '@prisma/client';
 
 @Injectable()
 export class AssessmentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private predictionService: PredictionService,
+  ) {}
 
-  async create(createAssessmentDto: CreateAssessmentDto, chwId: number) {
+  async create(createAssessmentDto: CreateAssessmentDto, user: any) {
     const { childId, ...data } = createAssessmentDto;
+    const chwId = user.userId;
 
     const child = await this.prisma.child.findUnique({ where: { id: childId } });
     if (!child) {
       throw new NotFoundException('Child not found');
     }
 
-    // Prepare features for ML model
-    // Mapping frontend/DB boolean to 'Yego'/'Oya' expected by ML model if necessary
-    // Based on train_model.ipynb, categorical features are strings like 'Yego', 'Oya', 'M', 'F', etc.
-    
     const mlFeatures = {
       umwana_afite_ababyeyi: data.hasBothParents ? 'Yego' : 'Oya',
       amashuri_mama_w_umwana_yiz: data.motherEducation,
@@ -40,11 +39,12 @@ export class AssessmentService {
       age_days: data.ageDays,
     };
 
-    // Call ML model
-    const predictionResult = await this.getMLPrediction(mlFeatures);
+    // Call ML model via PredictionService
+    const predictionResult = await this.predictionService.runPrediction(mlFeatures);
 
     // Save assessment and prediction
     return this.prisma.$transaction(async (tx) => {
+      const isNurse = user.role === 'NURSE';
       const assessment = await tx.assessment.create({
         data: {
           childId,
@@ -63,6 +63,9 @@ export class AssessmentService {
           hasSafeWater: data.hasSafeWater,
           hasHandwashingFacility: data.hasHandwashingFacility,
           hasToilet: data.hasToilet,
+          status: isNurse ? AssessmentStatus.REVIEWED : AssessmentStatus.PENDING,
+          reviewedBy: isNurse ? `${user.name} (Direct Submission)` : null,
+          reviewedAt: isNurse ? new Date() : null,
         },
       });
 
@@ -73,17 +76,13 @@ export class AssessmentService {
         riskLevel = RiskLevel.moderate;
       }
 
-      const recommendation = predictionResult.prediction === 'Stunted' 
-        ? "Immediate nutritional intervention recommended. Refer to health center for detailed assessment."
-        : "Continue regular monitoring. Ensure balanced diet with adequate protein and micronutrients.";
-
       await tx.prediction.create({
         data: {
           assessmentId: assessment.id,
           result: predictionResult.prediction,
           riskScore: predictionResult.risk_score,
           riskLevel: riskLevel,
-          recommendation: recommendation,
+          recommendation: predictionResult.recommendation,
         },
       });
 
@@ -92,60 +91,23 @@ export class AssessmentService {
         prediction: predictionResult.prediction,
         riskScore: predictionResult.risk_score,
         riskLevel,
-        recommendation,
+        recommendation: predictionResult.recommendation,
+        status: assessment.status,
       };
     });
   }
 
-  private async getMLPrediction(features: any): Promise<{ prediction: string; risk_score: number }> {
-    return new Promise((resolve, reject) => {
-      const scriptPath = path.join(process.cwd(), '..', 'predict.py');
-      const pythonPath = path.join(process.cwd(), '..', '.venv', 'Scripts', 'python.exe');
-      const pythonProcess = spawn(pythonPath, [scriptPath]);
-
-      let output = '';
-      let error = '';
-
-      pythonProcess.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      pythonProcess.stderr.on('data', (data) => {
-        error += data.toString();
-      });
-
-      pythonProcess.on('error', (err) => {
-        reject(new InternalServerErrorException(`Failed to start ML process: ${err.message}`));
-      });
-
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          return reject(new InternalServerErrorException(`ML process failed with code ${code}: ${error}`));
-        }
-        try {
-          const result = JSON.parse(output);
-          if (result.error) {
-            return reject(new InternalServerErrorException(`ML error: ${result.error}`));
-          }
-          resolve(result);
-        } catch (e) {
-          reject(new InternalServerErrorException(`Failed to parse ML output: ${output}`));
-        }
-      });
-
-      pythonProcess.stdin.write(JSON.stringify(features));
-      pythonProcess.stdin.end();
-    });
-  }
-
   async findAll(user: any) {
+    const includeOptions = {
+      child: true,
+      chw: {
+        include: { healthCenter: true }
+      },
+      prediction: true,
+    };
     if (user.role === 'ADMIN') {
       return this.prisma.assessment.findMany({
-        include: {
-          child: true,
-          chw: true,
-          prediction: true,
-        },
+        include: includeOptions,
       });
     } else if (user.role === 'NURSE') {
       const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
@@ -158,21 +120,13 @@ export class AssessmentService {
             healthCenterId: nurse.healthCenterId,
           },
         },
-        include: {
-          child: true,
-          chw: true,
-          prediction: true,
-        },
+        include: includeOptions,
       });
     } else {
       // CHW role
       return this.prisma.assessment.findMany({
         where: { chwId: user.userId },
-        include: {
-          child: true,
-          chw: true,
-          prediction: true,
-        },
+        include: includeOptions,
       });
     }
   }

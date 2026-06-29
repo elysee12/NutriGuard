@@ -7,40 +7,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRwandaLocations } from "@/hooks/useRwandaLocations";
+import { LocationFields } from "@/components/LocationFields";
 import { Search, AlertCircle, CheckCircle2, Pencil, Trash2, X, Plus, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { FaUser, FaCalendar, FaVenusMars, FaMapMarkerAlt, FaHome, FaBuilding, FaUserMd } from "react-icons/fa";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { API_URL } from "@/lib/api";
-import locationsData from "@/assets/rwanda_locations.json";
 import { useTranslation } from "react-i18next";
 import { formatChildId } from "@/lib/utils";
-
-interface LocationItem {
-  type: string;
-  name: string;
-}
-
-interface District extends LocationItem {
-  sectors: Sector[];
-}
-
-interface Sector extends LocationItem {
-  cells: Cell[];
-}
-
-interface Cell extends LocationItem {
-  villages: string[];
-}
-
-interface Province extends LocationItem {
-  districts: District[];
-}
-
-interface LocationData {
-  items: Province[];
-}
-
-const typedLocations = locationsData as LocationData;
 
 interface CHWRecord {
   id: number;
@@ -62,6 +37,7 @@ interface ChildRecord {
   dob: string;
   gender: string;
   motherName: string;
+  province: string;
   district: string;
   sector: string;
   cell: string;
@@ -83,12 +59,11 @@ export default function NurseRegisterChild() {
     dob: "",
     gender: "M",
     motherName: "",
-    district: "Kicukiro",
-    sector: "",
-    cell: "",
-    village: "",
     chwId: 0,
   });
+
+  // Use Rwanda locations hook
+  const location = useRwandaLocations();
 
   const [children, setChildren] = useState<ChildRecord[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(true);
@@ -104,10 +79,6 @@ export default function NurseRegisterChild() {
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
 
-  const [districtsList, setDistrictsList] = useState<string[]>([]);
-  const [sectorsList, setSectorsList] = useState<string[]>([]);
-  const [cellsList, setCellsList] = useState<string[]>([]);
-  const [villagesList, setVillagesList] = useState<string[]>([]);
   const [availableCHWs, setAvailableCHWs] = useState<CHWRecord[]>([]);
   const [loadingCHWs, setLoadingCHWs] = useState(false);
 
@@ -176,50 +147,6 @@ export default function NurseRegisterChild() {
     loadCHWs();
   }, [token, user?.healthCenterId]);
 
-  // Initialize districts
-  useEffect(() => {
-    // Only Kicukiro for this project
-    setDistrictsList(["Kicukiro"]);
-  }, []);
-
-  // Update sectors when district changes
-  useEffect(() => {
-    if (form.district) {
-      const districtData = typedLocations.items
-        .flatMap((p) => p.districts)
-        .find((d) => d.name === form.district);
-      setSectorsList(districtData ? districtData.sectors.map((s) => s.name).sort() : []);
-    } else {
-      setSectorsList([]);
-    }
-  }, [form.district]);
-
-  // Update cells when sector changes
-  useEffect(() => {
-    if (form.district && form.sector) {
-      const districtData = typedLocations.items
-        .flatMap((p) => p.districts)
-        .find((d) => d.name === form.district);
-      const sectorData = districtData?.sectors.find((s) => s.name === form.sector);
-      setCellsList(sectorData ? sectorData.cells.map((c) => c.name).sort() : []);
-    } else {
-      setCellsList([]);
-    }
-  }, [form.district, form.sector]);
-
-  // Update villages when cell changes
-  useEffect(() => {
-    if (form.district && form.sector && form.cell) {
-      const districtData = typedLocations.items
-        .flatMap((p) => p.districts)
-        .find((d) => d.name === form.district);
-      const sectorData = districtData?.sectors.find((s) => s.name === form.sector);
-      const cellData = sectorData?.cells.find((c) => c.name === form.cell);
-      setVillagesList(cellData ? [...cellData.villages].sort() : []);
-    } else {
-      setVillagesList([]);
-    }
-  }, [form.district, form.sector, form.cell]);
 
   // Load registered children
   useEffect(() => {
@@ -262,11 +189,16 @@ export default function NurseRegisterChild() {
       dob: new Date(child.dob).toISOString().split('T')[0],
       gender: child.gender,
       motherName: child.motherName,
+      chwId: child.chw?.id || 0,
+    });
+
+    // Set location data
+    location.setLocation({
+      province: child.province || "",
       district: child.district,
       sector: child.sector,
       cell: child.cell,
       village: child.village,
-      chwId: child.chw?.id || 0,
     });
     
     if (child.chw) {
@@ -290,8 +222,8 @@ export default function NurseRegisterChild() {
 
   // Search for CHWs when village is entered
   const searchChws = async () => {
-    if (!form.district || !form.sector || !form.cell || !form.village) {
-      toast.error(t('assessment.location_required_error', "Please enter District, Sector, Cell, and Village"));
+    if (!location.province || !location.district || !location.sector || !location.cell || !location.village) {
+      toast.error(t('assessment.location_required_error', "Please select all location fields"));
       return;
     }
 
@@ -301,10 +233,10 @@ export default function NurseRegisterChild() {
 
     try {
       const params = new URLSearchParams({
-        district: form.district,
-        sector: form.sector,
-        cell: form.cell,
-        village: form.village,
+        district: location.district,
+        sector: location.sector,
+        cell: location.cell,
+        village: location.village,
       });
 
       const response = await fetch(`${API_URL}/user/chw/search?${params}`, {
@@ -381,12 +313,9 @@ export default function NurseRegisterChild() {
       dob: "",
       gender: "M",
       motherName: "",
-      district: "Kicukiro",
-      sector: "",
-      cell: "",
-      village: "",
       chwId: 0,
     });
+    location.resetLocation();
     setSelectedChw(null);
     setChws([]);
   };
@@ -409,7 +338,7 @@ export default function NurseRegisterChild() {
       return;
     }
 
-    if (!form.district.trim() || !form.sector.trim() || !form.cell.trim() || !form.village.trim()) {
+    if (!location.province.trim() || !location.district.trim() || !location.sector.trim() || !location.cell.trim() || !location.village.trim()) {
       toast.error(t('assessment.location_all_required', "All location fields are required"));
       return;
     }
@@ -429,10 +358,11 @@ export default function NurseRegisterChild() {
           dob: form.dob,
           gender: form.gender,
           motherName: form.motherName.trim(),
-          district: form.district.trim(),
-          sector: form.sector.trim(),
-          cell: form.cell.trim(),
-          village: form.village.trim(),
+          province: location.province.trim(),
+          district: location.district.trim(),
+          sector: location.sector.trim(),
+          cell: location.cell.trim(),
+          village: location.village.trim(),
           chwId: form.chwId || null,
         }),
       });
@@ -461,7 +391,6 @@ export default function NurseRegisterChild() {
         dob: "",
         gender: "M",
         motherName: "",
-        village: "",
         chwId: 0,
       }));
       setSelectedChw(null);
@@ -581,12 +510,12 @@ export default function NurseRegisterChild() {
               {/* Desktop View: Table */}
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
+                  <thead className="table-header">
+                    <tr>
                       {[
                         'ID', t('common.child'), t('assessment.mother_name'), t('common.dob'), t('location.sector'), t('location.cell'), t('location.village'), t('assessment.assign_chw'), t('common.registered'), t('common.actions')
                       ].map((header) => (
-                        <th key={header} className="p-4 text-sm font-medium text-muted-foreground">{header}</th>
+                        <th key={header} className="p-4 text-xs font-bold text-foreground uppercase tracking-wider">{header}</th>
                       ))}
                     </tr>
                   </thead>
@@ -686,10 +615,17 @@ export default function NurseRegisterChild() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column: Info */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{t('assessment.child_info')}</h3>
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <FaUser className="h-4 w-4 text-primary" />
+                  {t('assessment.child_info')}
+                </h3>
                 <div className="space-y-2">
-                  <Label>{t('assessment.full_name')}</Label>
+                  <Label className="flex items-center gap-2">
+                    <FaUser className="h-3.5 w-3.5 text-primary" />
+                    {t('assessment.full_name')}
+                  </Label>
                   <Input 
+                    icon={<FaUser className="h-4 w-4" />}
                     className={`h-11 ${isDuplicate ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder={t('assessment.enter_child_name', "Enter child's name")}
                     value={form.name} 
@@ -699,24 +635,44 @@ export default function NurseRegisterChild() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{t('common.dob')}</Label>
-                    <Input type="date" className="h-11" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required />
+                    <Label className="flex items-center gap-2">
+                      <FaCalendar className="h-3.5 w-3.5 text-primary" />
+                      {t('common.dob')}
+                    </Label>
+                    <Input 
+                      type="date" 
+                      icon={<FaCalendar className="h-4 w-4" />}
+                      className="h-11" 
+                      value={form.dob} 
+                      onChange={(e) => setForm({ ...form, dob: e.target.value })} 
+                      required 
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('common.gender')}</Label>
-                    <select
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                      value={form.gender}
-                      onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                    >
-                      <option value="M">{t('assessment.male')}</option>
-                      <option value="F">{t('assessment.female')}</option>
-                    </select>
+                    <Label className="flex items-center gap-2">
+                      <FaVenusMars className="h-3.5 w-3.5 text-primary" />
+                      {t('common.gender')}
+                    </Label>
+                    <div className="relative">
+                      <FaVenusMars className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                      <select
+                        className="flex h-11 w-full rounded-lg border border-input bg-background pl-10 pr-3 py-2 text-sm"
+                        value={form.gender}
+                        onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                      >
+                        <option value="M">{t('assessment.male')}</option>
+                        <option value="F">{t('assessment.female')}</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('assessment.mother_name')}</Label>
+                  <Label className="flex items-center gap-2">
+                    <FaUser className="h-3.5 w-3.5 text-primary" />
+                    {t('assessment.mother_name')}
+                  </Label>
                   <Input 
+                    icon={<FaUser className="h-4 w-4" />}
                     className={`h-11 ${isDuplicate ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder={t('assessment.enter_guardian_name', "Enter guardian name")}
                     value={form.motherName} 
@@ -737,100 +693,103 @@ export default function NurseRegisterChild() {
 
               {/* Right Column: Location & CHW */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{t('assessment.location_info')}</h3>
-                <div className="space-y-2">
-                  <Label>{t('location.district')}</Label>
-                  <select
-                    className="flex h-11 w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed"
-                    value={form.district}
-                    disabled
-                    required
-                  >
-                    <option value="Kicukiro">Kicukiro</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t('location.sector')}</Label>
-                    <select
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                      value={form.sector}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          sector: e.target.value,
-                          cell: "",
-                          village: "",
-                        })
-                      }
-                      required
-                    >
-                      <option value="">{t('location.select_sector')}</option>
-                      {sectorsList.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('location.cell')}</Label>
-                    <select
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                      value={form.cell}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          cell: e.target.value,
-                          village: "",
-                        })
-                      }
-                      required
-                      disabled={!form.sector}
-                    >
-                      <option value="">{t('location.select_cell')}</option>
-                      {cellsList.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('location.village')}</Label>
-                  <select
-                    className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                    value={form.village}
-                    onChange={(e) => setForm({ ...form, village: e.target.value })}
-                    required
-                    disabled={!form.cell}
-                  >
-                    <option value="">{t('location.select_village')}</option>
-                    {villagesList.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <FaMapMarkerAlt className="h-4 w-4 text-primary" />
+                  {t('assessment.location_info')}
+                </h3>
+                
+                {/* Use LocationFields component */}
+                <LocationFields
+                  province={location.province}
+                  district={location.district}
+                  sector={location.sector}
+                  cell={location.cell}
+                  village={location.village}
+                  provinces={location.provinces}
+                  districts={location.districts}
+                  sectors={location.sectors}
+                  cells={location.cells}
+                  villages={location.villages}
+                  onProvinceChange={location.handleProvinceChange}
+                  onDistrictChange={location.handleDistrictChange}
+                  onSectorChange={location.handleSectorChange}
+                  onCellChange={location.handleCellChange}
+                  onVillageChange={location.handleVillageChange}
+                  required={true}
+                  showIcons={true}
+                  className="space-y-4"
+                />
 
                 <div className="space-y-2 pt-2">
-                  <Label className="text-emerald-700 font-semibold">{t('assessment.assign_chw')}</Label>
-                  <select
-                    className="flex h-11 w-full rounded-lg border-2 border-emerald-100 bg-emerald-50/30 px-3 py-2 text-sm focus:border-emerald-500 transition-colors"
-                    value={form.chwId}
-                    onChange={(e) => setForm({ ...form, chwId: Number(e.target.value) })}
-                    required
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-11 text-primary border-primary hover:bg-primary/5"
+                    onClick={searchChws}
+                    disabled={!location.province || !location.district || !location.sector || !location.cell || !location.village || searchingChws}
                   >
-                    <option value="">{t('assessment.select_chw')}</option>
-                    {availableCHWs.map((chw) => (
-                      <option key={chw.id} value={chw.id}>
-                        {chw.name} ({chw.sector}, {chw.cell}, {chw.village})
-                      </option>
-                    ))}
-                  </select>
+                    {searchingChws ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                        {t('common.searching')}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <FaUserMd className="h-4 w-4" />
+                        {t('assessment.search_chws')}
+                      </div>
+                    )}
+                  </Button>
                 </div>
+
+                {/* CHW Selection */}
+                {selectedChw && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <div>
+                          <p className="font-medium text-sm">{selectedChw.name}</p>
+                          <p className="text-xs text-muted-foreground">{selectedChw.healthCenter.name}</p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedChw(null);
+                          setForm({ ...form, chwId: 0 });
+                        }}
+                        className="text-xs"
+                      >
+                        {t('common.change')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {chws.length > 1 && !selectedChw && (
+                  <div className="space-y-2">
+                    <Label className="text-primary font-semibold flex items-center gap-2">
+                      <FaUserMd className="h-3.5 w-3.5" />
+                      {t('assessment.select_chw')}
+                    </Label>
+                    <div className="grid gap-2 max-h-32 overflow-y-auto">
+                      {chws.map((chw) => (
+                        <button
+                          key={chw.id}
+                          type="button"
+                          onClick={() => handleSelectChw(chw)}
+                          className="text-left p-3 border rounded-lg hover:bg-primary/5 hover:border-primary transition-colors"
+                        >
+                          <p className="font-medium text-sm">{chw.name}</p>
+                          <p className="text-xs text-muted-foreground">{chw.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -891,83 +850,28 @@ export default function NurseRegisterChild() {
               {/* Right Column: Location & CHW */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{t('assessment.location_info')}</h3>
-                <div className="space-y-2">
-                  <Label>{t('location.district')}</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed"
-                    value={form.district}
-                    disabled
-                    required
-                  >
-                    <option value="Kicukiro">Kicukiro</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t('location.sector')}</Label>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={form.sector}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          sector: e.target.value,
-                          cell: "",
-                          village: "",
-                        })
-                      }
-                      required
-                      disabled={!form.district}
-                    >
-                      <option value="">{t('location.select_sector')}</option>
-                      {sectorsList.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('location.cell')}</Label>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={form.cell}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          cell: e.target.value,
-                          village: "",
-                        })
-                      }
-                      required
-                      disabled={!form.sector}
-                    >
-                      <option value="">{t('location.select_cell')}</option>
-                      {cellsList.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('location.village')}</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={form.village}
-                    onChange={(e) => setForm({ ...form, village: e.target.value })}
-                    required
-                    disabled={!form.cell}
-                  >
-                    <option value="">{t('location.select_village')}</option>
-                    {villagesList.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                
+                {/* Use LocationFields component for editing */}
+                <LocationFields
+                  province={location.province}
+                  district={location.district}
+                  sector={location.sector}
+                  cell={location.cell}
+                  village={location.village}
+                  provinces={location.provinces}
+                  districts={location.districts}
+                  sectors={location.sectors}
+                  cells={location.cells}
+                  villages={location.villages}
+                  onProvinceChange={location.handleProvinceChange}
+                  onDistrictChange={location.handleDistrictChange}
+                  onSectorChange={location.handleSectorChange}
+                  onCellChange={location.handleCellChange}
+                  onVillageChange={location.handleVillageChange}
+                  required={true}
+                  showIcons={false}
+                  className="space-y-4"
+                />
 
                 <div className="space-y-2 pt-2">
                   <Label className="text-emerald-700 font-semibold text-xs uppercase tracking-wider">{t('assessment.assign_chw')}</Label>
@@ -986,43 +890,6 @@ export default function NurseRegisterChild() {
                   </select>
                 </div>
               </div>
-            </div>
-
-            {/* CHW Selection in Modal */}
-            <div className="bg-muted/30 p-4 rounded-lg border">
-              <h3 className="font-semibold text-sm mb-3">{t('assessment.assign_chw')}</h3>
-              {selectedChw ? (
-                <div className="flex items-center justify-between bg-white p-3 rounded border border-emerald-200">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                    <div>
-                      <p className="text-sm font-medium">{selectedChw.name}</p>
-                      <p className="text-xs text-muted-foreground">{selectedChw.healthCenter.name}</p>
-                    </div>
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setSelectedChw(null); setForm({ ...form, chwId: 0 }); }}>
-                    {t('common.edit')}
-                  </Button>
-                </div>
-              ) : chws.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-1">
-                  {chws.map(chw => (
-                    <button
-                      key={chw.id}
-                      type="button"
-                      onClick={() => handleSelectChw(chw)}
-                      className="text-left p-2 text-xs border rounded hover:bg-emerald-50 hover:border-emerald-300 transition-colors"
-                    >
-                      <p className="font-semibold">{chw.name}</p>
-                      <p className="text-muted-foreground truncate">{chw.email}</p>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-center text-muted-foreground py-2">
-                  {searchingChws ? t('common.loading') : t('assessment.search_village_chw', "Search village to see available CHWs")}
-                </p>
-              )}
             </div>
 
             <DialogFooter>

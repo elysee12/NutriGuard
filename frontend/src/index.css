@@ -6,81 +6,108 @@
 
 @layer base {
   :root {
-    --background: 140 20% 97%;
-    --foreground: 200 25% 12%;
+    /* Premium Healthcare Color Palette - Inspired by Modern Medical UI */
+    --background: 0 0% 99%;
+    --foreground: 210 24% 16%;
 
     --card: 0 0% 100%;
-    --card-foreground: 200 25% 12%;
+    --card-foreground: 210 24% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 200 25% 12%;
+    --popover-foreground: 210 24% 16%;
 
-    --primary: 152 55% 33%;
+    /* Vibrant Teal Primary - Medical & Trust */
+    --primary: 174 62% 47%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 140 15% 93%;
-    --secondary-foreground: 200 25% 12%;
+    /* Soft Neutral Secondary */
+    --secondary: 210 16% 96%;
+    --secondary-foreground: 210 24% 16%;
 
-    --muted: 140 10% 94%;
-    --muted-foreground: 200 10% 46%;
+    --muted: 210 14% 97%;
+    --muted-foreground: 210 12% 46%;
 
-    --accent: 38 92% 50%;
+    /* Accent Teal */
+    --accent: 174 62% 47%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 140 12% 89%;
-    --input: 140 12% 89%;
-    --ring: 152 55% 33%;
+    --border: 210 16% 93%;
+    --input: 210 16% 95%;
+    --ring: 174 62% 47%;
 
     --radius: 0.75rem;
 
-    --success: 152 60% 40%;
+    /* Status Colors - Vibrant & Clear */
+    --success: 142 71% 45%;
+    --success-light: 142 76% 96%;
+    --success-foreground: 0 0% 100%;
+    
     --warning: 38 92% 50%;
-    --danger: 0 72% 51%;
+    --warning-light: 38 100% 96%;
+    --warning-foreground: 0 0% 100%;
+    
+    --danger: 0 84% 60%;
+    --danger-light: 0 100% 97%;
+    --danger-foreground: 0 0% 100%;
+    
+    --info: 199 89% 48%;
+    --info-light: 199 100% 96%;
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 200 25% 12%;
-    --sidebar-foreground: 140 10% 85%;
-    --sidebar-primary: 152 55% 45%;
+    /* Premium Sidebar - Deep Teal/Green */
+    --sidebar-background: 174 42% 15%;
+    --sidebar-foreground: 174 15% 85%;
+    --sidebar-primary: 174 62% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 20% 18%;
-    --sidebar-accent-foreground: 140 10% 85%;
-    --sidebar-border: 200 15% 20%;
-    --sidebar-ring: 152 55% 45%;
+    --sidebar-accent: 174 35% 20%;
+    --sidebar-accent-foreground: 174 15% 90%;
+    --sidebar-border: 174 30% 18%;
+    --sidebar-ring: 174 62% 55%;
 
+    /* Typography */
     --font-display: 'Plus Jakarta Sans', sans-serif;
     --font-body: 'Inter', sans-serif;
+
+    /* Premium Shadows */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   }
 
   .dark {
-    --background: 200 25% 8%;
-    --foreground: 140 10% 92%;
-    --card: 200 20% 12%;
-    --card-foreground: 140 10% 92%;
-    --popover: 200 20% 12%;
-    --popover-foreground: 140 10% 92%;
-    --primary: 152 55% 45%;
+    --background: 174 35% 8%;
+    --foreground: 174 12% 92%;
+    --card: 174 30% 11%;
+    --card-foreground: 174 12% 92%;
+    --popover: 174 30% 11%;
+    --popover-foreground: 174 12% 92%;
+    --primary: 174 62% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 200 15% 18%;
-    --secondary-foreground: 140 10% 92%;
-    --muted: 200 15% 18%;
-    --muted-foreground: 140 8% 55%;
-    --accent: 38 92% 50%;
+    --secondary: 174 25% 15%;
+    --secondary-foreground: 174 12% 92%;
+    --muted: 174 25% 15%;
+    --muted-foreground: 174 10% 58%;
+    --accent: 174 62% 52%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 30.6%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 200 15% 20%;
-    --input: 200 15% 20%;
-    --ring: 152 55% 45%;
-    --sidebar-background: 200 25% 6%;
-    --sidebar-foreground: 140 10% 85%;
-    --sidebar-primary: 152 55% 45%;
+    --border: 174 25% 18%;
+    --input: 174 25% 18%;
+    --ring: 174 62% 52%;
+    --sidebar-background: 174 42% 6%;
+    --sidebar-foreground: 174 15% 85%;
+    --sidebar-primary: 174 62% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 20% 12%;
-    --sidebar-accent-foreground: 140 10% 85%;
-    --sidebar-border: 200 15% 15%;
-    --sidebar-ring: 152 55% 45%;
+    --sidebar-accent: 174 35% 12%;
+    --sidebar-accent-foreground: 174 15% 90%;
+    --sidebar-border: 174 30% 10%;
+    --sidebar-ring: 174 62% 55%;
   }
 }
 
@@ -90,26 +117,260 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl lg:text-2xl;
   }
 }
 
 @layer components {
+  /* Premium Risk Status Badges */
   .risk-low {
-    @apply bg-green-100 text-green-800 border-green-200;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
+           bg-success-light text-success border border-success/20;
   }
   .risk-moderate {
-    @apply bg-amber-100 text-amber-800 border-amber-200;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
+           bg-warning-light text-warning border border-warning/20;
   }
   .risk-high {
-    @apply bg-red-100 text-red-800 border-red-200;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
+           bg-danger-light text-danger border border-danger/20;
   }
+
+  /* Premium Stat Cards - Modern Design with Professional Shadows */
   .stat-card {
-    @apply bg-card rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow;
+    @apply relative bg-gradient-to-br from-white via-white to-gray-50/50
+           rounded-2xl border border-border/60 p-6 
+           shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]
+           transition-all duration-300 
+           hover:shadow-[0_8px_24px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.06)]
+           hover:border-primary/30
+           hover:-translate-y-1 overflow-hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 300ms;
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Premium Form Sections with Professional Design */
+  .form-section {
+    @apply bg-gradient-to-br from-white via-white to-gray-50/30 
+           rounded-xl p-6 border border-border/60 
+           shadow-[0_2px_8px_rgba(0,0,0,0.04)]
+           transition-all duration-200 hover:border-primary/30 hover:shadow-md;
+  }
+
+  /* Form Field Container */
+  .form-field {
+    @apply space-y-2;
+  }
+
+  /* Form Label */
+  .form-label {
+    @apply text-sm font-bold text-foreground flex items-center gap-2;
+  }
+
+  /* Form Input Wrapper */
+  .form-input-wrapper {
+    @apply relative;
+  }
+
+  /* Form Grid Layout */
+  .form-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+  }
+
+  .form-grid-full {
+    @apply grid grid-cols-1 gap-6;
+  }
+
+  /* Modern Table Headers - Premium Design */
+  .table-header {
+    @apply bg-gradient-to-r from-primary/10 via-primary/5 to-background 
+           border-b-2 border-primary/20;
+  }
+  
+  .table-header th {
+    @apply text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider;
+  }
+
+  /* Premium Table Row Interactions */
+  .table-row-hover {
+    @apply transition-all duration-200 hover:bg-muted/40 cursor-pointer
+           border-b border-border/50 last:border-0;
+  }
+
+  /* Input Icon Positioning */
+  .input-icon {
+    @apply absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none;
+  }
+
+  /* Premium Professional Card with Enhanced Shadows */
+  .professional-card {
+    @apply bg-white rounded-2xl border border-border/60 
+           shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]
+           hover:shadow-[0_8px_24px_rgba(0,0,0,0.08),0_4px_8px_rgba(0,0,0,0.06)]
+           hover:border-primary/20 transition-all duration-300;
+  }
+
+  /* Premium Status Indicators */
+  .status-active {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+           bg-success-light text-success text-xs font-bold border border-success/20;
+  }
+
+  .status-pending {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+           bg-warning-light text-warning text-xs font-bold border border-warning/20;
+  }
+
+  .status-inactive {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+           bg-muted text-muted-foreground text-xs font-bold border border-border;
+  }
+
+  /* Premium Page Header */
+  .page-header {
+    @apply mb-8 pb-6 border-b border-border/50;
+  }
+
+  .page-title {
+    @apply text-3xl lg:text-4xl font-display font-bold tracking-tight text-foreground;
+  }
+
+  .page-description {
+    @apply text-base text-muted-foreground mt-2 max-w-3xl;
+  }
+
+  /* Premium Data Grid */
+  .data-grid {
+    @apply grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  /* Premium Focus Ring */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 
+           focus:ring-offset-background transition-all duration-200;
+  }
+
+  /* Premium Elevated Section */
+  .elevated-section {
+    @apply bg-card rounded-2xl border border-border shadow-md p-6 lg:p-8;
+  }
+
+  /* Premium Metric Display */
+  .metric-value {
+    @apply text-4xl lg:text-5xl font-display font-bold text-foreground tracking-tight;
+  }
+
+  .metric-label {
+    @apply text-xs font-bold text-muted-foreground uppercase tracking-wider;
+  }
+
+  /* Premium Icon Container */
+  .icon-container {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center
+           transition-all duration-300;
+  }
+
+  .icon-container-primary {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center
+           transition-all duration-300 bg-primary/10 text-primary 
+           hover:bg-primary/20 hover:scale-110;
+  }
+
+  .icon-container-success {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center
+           transition-all duration-300 bg-success/10 text-success 
+           hover:bg-success/20 hover:scale-110;
+  }
+
+  .icon-container-warning {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center
+           transition-all duration-300 bg-warning/10 text-warning 
+           hover:bg-warning/20 hover:scale-110;
+  }
+
+  .icon-container-danger {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center
+           transition-all duration-300 bg-danger/10 text-danger 
+           hover:bg-danger/20 hover:scale-110;
+  }
+
+  .icon-container-info {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center
+           transition-all duration-300 bg-info/10 text-info 
+           hover:bg-info/20 hover:scale-110;
+  }
+
+  /* Premium Badge */
+  .premium-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+           text-xs font-bold border transition-all duration-200;
+  }
+
+  /* Premium Button Enhancement */
+  .btn-icon {
+    @apply inline-flex items-center justify-center gap-2 transition-all duration-200;
+  }
+
+  /* Greeting Header */
+  .greeting-header {
+    @apply text-xs font-semibold text-primary uppercase tracking-wider mb-1;
+  }
+
+  /* Premium Empty State */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 px-4 text-center;
+  }
+
+  .empty-state-icon {
+    @apply h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center 
+           text-muted-foreground mb-4;
+  }
+
+  /* Loading Skeleton */
+  .skeleton-pulse {
+    @apply animate-pulse bg-muted rounded-lg;
+  }
+
+  /* Premium Divider */
+  .premium-divider {
+    @apply h-px bg-gradient-to-r from-transparent via-border to-transparent my-6;
   }
 }
+

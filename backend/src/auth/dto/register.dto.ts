@@ -28,6 +28,10 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
+  province?: string;
+
+  @IsString()
+  @IsOptional()
   district?: string;
 
   @IsString()
