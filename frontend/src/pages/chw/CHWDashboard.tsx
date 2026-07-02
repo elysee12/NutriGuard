@@ -1,5 +1,4 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { StatCard, RiskBadge, PageHeader } from "@/components/DashboardComponents";
 import { Baby, ClipboardList, AlertTriangle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -65,140 +64,200 @@ export default function CHWDashboard() {
     return `${months} ${t('dashboard.months')}`;
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('dashboard.good_morning', 'GOOD MORNING');
+    if (hour < 18) return t('dashboard.good_afternoon', 'GOOD AFTERNOON');
+    return t('dashboard.good_evening', 'GOOD EVENING');
+  };
+
+  const getRiskBadgeStyles = (level: string) => {
+    switch (level) {
+      case 'high':
+        return 'bg-red-50 text-red-700 border-red-200';
+      case 'moderate':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      default:
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    }
+  };
+
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-        <PageHeader
-          title={`Welcome, ${user?.name?.split(' ')[0] || 'CHW'}.`}
-          description={center ? `${center} — Community Health Worker Dashboard` : "Community Health Worker Dashboard"}
-          actions={
-            <Button onClick={() => navigate("/chw/register")} className="font-bold">
-              <Baby className="h-5 w-5" />
-              {t('nav.register_child')}
-            </Button>
-          }
-        />
-
-        {/* Premium Stats Grid */}
-        <div className="data-grid mb-8">
-          <StatCard title={t('dashboard.children_registered')} value={stats?.totalChildren || 0} icon={<Baby className="h-7 w-7" />} />
-          <StatCard title={t('dashboard.assessments')} value={stats?.totalAssessments || 0} icon={<ClipboardList className="h-7 w-7" />} />
-          <StatCard title={t('dashboard.high_risk_cases')} value={stats?.highRiskCount || 0} icon={<AlertTriangle className="h-7 w-7" />} changeType="negative" />
-          <StatCard title={t('dashboard.follow_up_rate')} value={stats?.followUpRate || "0%"} icon={<TrendingUp className="h-7 w-7" />} changeType="positive" />
-        </div>
-
-        {/* Recent Assessments - Premium Card */}
-        <div className="professional-card overflow-hidden">
-          <div className="p-6 bg-gradient-to-r from-primary/5 via-background to-background border-b flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-emerald-50/30">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+          {/* Hero Header */}
+          <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-600 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-2xl"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <Baby className="h-5 w-5 text-white/80" />
+                <span className="text-white/90 text-sm font-semibold tracking-wider">{getGreeting()}</span>
               </div>
-              <div>
-                <h2 className="font-display text-xl font-bold text-card-foreground">{t('dashboard.recent_assessments')}</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Latest health screenings</p>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-2">
+                Welcome, {user?.name?.split(' ')[0] || 'CHW'}.
+              </h1>
+              <p className="text-white/90 text-lg mb-6">
+                {center ? `${center} — Community Health Worker Dashboard` : "Community Health Worker Dashboard"}
+              </p>
+              
+              <Button 
+                onClick={() => navigate("/chw/register")} 
+                size="lg"
+                className="bg-white text-teal-600 hover:bg-white/90 shadow-xl font-bold h-12 px-6 rounded-xl"
+              >
+                <Baby className="h-5 w-5 mr-2" />
+                {t('nav.register_child')}
+              </Button>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Children Registered */}
+            <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-100">
+              <div className="flex items-start justify-between mb-4">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <Baby className="h-7 w-7 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-bold">
+                  <TrendingUp className="h-3 w-3 inline mr-1" />
+                  Active
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.totalChildren || 0}</p>
+              <p className="text-sm text-slate-600 font-medium">{t('dashboard.children_registered')}</p>
+            </div>
+
+            {/* Total Assessments */}
+            <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-100">
+              <div className="flex items-start justify-between mb-4">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <ClipboardList className="h-7 w-7 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                  Total
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.totalAssessments || 0}</p>
+              <p className="text-sm text-slate-600 font-medium">{t('dashboard.assessments')}</p>
+            </div>
+
+            {/* High Risk Cases */}
+            <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-100">
+              <div className="flex items-start justify-between mb-4">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <AlertTriangle className="h-7 w-7 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold">
+                  Critical
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.highRiskCount || 0}</p>
+              <p className="text-sm text-slate-600 font-medium">{t('dashboard.high_risk_cases')}</p>
+            </div>
+
+            {/* Follow-up Rate */}
+            <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-100">
+              <div className="flex items-start justify-between mb-4">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <TrendingUp className="h-7 w-7 text-white" />
+                </div>
+                <div className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
+                  Rate
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-slate-900 mb-1">{stats?.followUpRate || "0%"}</p>
+              <p className="text-sm text-slate-600 font-medium">{t('dashboard.follow_up_rate')}</p>
+            </div>
+          </div>
+
+          {/* Recent Assessments Table */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border-b border-teal-100 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                    <ClipboardList className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">{t('dashboard.recent_assessments')}</h2>
+                    <p className="text-sm text-slate-600 mt-0.5">Latest health screenings conducted</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate("/chw/results")} 
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg font-bold rounded-xl"
+                >
+                  {t('dashboard.view_all')}
+                </Button>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/chw/results")} className="font-bold">
-              {t('dashboard.view_all')}
-            </Button>
-          </div>
-          
-          {/* Mobile View: Card List */}
-          <div className="block sm:hidden divide-y">
-            {recentAssessments.length === 0 ? (
-              <div className="p-12">
-                <div className="empty-state">
-                  <div className="empty-state-icon">
-                    <ClipboardList className="h-10 w-10" />
-                  </div>
-                  <p className="text-muted-foreground font-semibold">{t('dashboard.no_assessments')}</p>
-                </div>
-              </div>
-            ) : (
-              recentAssessments.map((a) => (
-                <div key={a.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Baby className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-foreground">{a.child.name}</p>
-                        <p className="text-xs text-muted-foreground">{calculateAge(a.child.dob)} • {new Date(a.date).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <RiskBadge level={a.prediction?.riskLevel || "low"} />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className={`premium-badge ${a.status === "REVIEWED" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
-                      {a.status === "REVIEWED" ? t('dashboard.reviewed') : t('dashboard.pending')}
-                    </span>
-                    <Button variant="ghost" size="sm" className="h-8 text-primary font-bold" onClick={() => navigate(`/chw/results`)}>
-                      {t('dashboard.details')}
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
 
-          {/* Desktop View: Table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full">
-              <thead className="table-header">
-                <tr>
-                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('dashboard.child')}</th>
-                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('dashboard.age')}</th>
-                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('common.date')}</th>
-                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('dashboard.risk_level')}</th>
-                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('common.status')}</th>
-                  <th className="text-left p-4 text-xs font-bold text-foreground uppercase tracking-wider">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentAssessments.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <td colSpan={6} className="p-12">
-                      <div className="empty-state">
-                        <div className="empty-state-icon">
-                          <ClipboardList className="h-10 w-10" />
-                        </div>
-                        <p className="text-muted-foreground font-semibold">{t('dashboard.no_assessments')}</p>
-                      </div>
-                    </td>
+                    {[t('dashboard.child'), t('dashboard.age'), t('common.date'), t('dashboard.risk_level'), t('common.status'), t('common.actions')].map((h) => (
+                      <th key={h} className="text-left p-4 text-xs font-bold text-slate-700 uppercase tracking-wider">{h}</th>
+                    ))}
                   </tr>
-                ) : (
-                  recentAssessments.map((a) => (
-                    <tr key={a.id} className="table-row-hover">
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {recentAssessments.map((a) => (
+                    <tr key={a.id} className="hover:bg-slate-50 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Baby className="h-4 w-4 text-primary" />
+                          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center">
+                            <Baby className="h-5 w-5 text-teal-700" />
                           </div>
-                          <span className="text-sm font-bold text-foreground">{a.child.name}</span>
+                          <span className="text-sm font-bold text-slate-900">{a.child.name}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-sm text-muted-foreground">{calculateAge(a.child.dob)}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString()}</td>
+                      <td className="p-4 text-sm text-slate-600">{calculateAge(a.child.dob)}</td>
+                      <td className="p-4 text-sm text-slate-600">{new Date(a.date).toLocaleDateString()}</td>
                       <td className="p-4">
-                        <RiskBadge level={a.prediction?.riskLevel || "low"} />
+                        <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold border ${getRiskBadgeStyles(a.prediction?.riskLevel || 'low')}`}>
+                          {(a.prediction?.riskLevel || 'low').toUpperCase()}
+                        </span>
                       </td>
                       <td className="p-4">
-                        <span className={`premium-badge ${a.status === "REVIEWED" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
+                        <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold border ${a.status === "REVIEWED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
                           {a.status === "REVIEWED" ? t('dashboard.reviewed') : t('dashboard.pending')}
                         </span>
                       </td>
                       <td className="p-4">
-                        <Button variant="ghost" size="sm" className="h-9 text-primary font-bold" onClick={() => navigate(`/chw/results`)}>
+                        <Button 
+                          size="sm" 
+                          onClick={() => navigate(`/chw/results`)} 
+                          className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold rounded-lg shadow-md"
+                        >
                           {t('dashboard.details')}
                         </Button>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                  {recentAssessments.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="p-16">
+                        <div className="text-center">
+                          <div className="inline-flex h-20 w-20 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 items-center justify-center mb-4">
+                            <ClipboardList className="h-10 w-10 text-teal-600" />
+                          </div>
+                          <p className="text-slate-600 font-semibold text-lg">{t('dashboard.no_assessments')}</p>
+                          <p className="text-slate-500 text-sm mt-1">Start by registering children and conducting assessments</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

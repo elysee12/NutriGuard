@@ -167,7 +167,7 @@ export class PredictionService implements OnModuleInit, OnModuleDestroy {
       return this.prisma.prediction.findMany({
         where: {
           assessment: {
-            chw: {
+            child: {
               healthCenterId: nurse.healthCenterId,
             },
           },
@@ -182,11 +182,13 @@ export class PredictionService implements OnModuleInit, OnModuleDestroy {
         },
       });
     } else {
-      // CHW role
+      // CHW role: all predictions for children assigned to this CHW
       return this.prisma.prediction.findMany({
         where: {
           assessment: {
-            chwId: user.userId,
+            child: {
+              chwId: user.userId,
+            },
           },
         },
         include: {
@@ -207,7 +209,9 @@ export class PredictionService implements OnModuleInit, OnModuleDestroy {
       include: {
         assessment: {
           include: {
-            child: true,
+            child: {
+              include: { healthCenter: true }
+            },
             chw: {
               include: { healthCenter: true }
             },
@@ -218,13 +222,15 @@ export class PredictionService implements OnModuleInit, OnModuleDestroy {
     if (!prediction) throw new NotFoundException('Prediction not found');
 
     // Authorization check
-    if (user.role === 'CHW' && prediction.assessment.chwId !== user.userId) {
-      throw new ForbiddenException('You can only access predictions for your assessments');
+    if (user.role === 'CHW') {
+      if (prediction.assessment.child.chwId !== user.userId && prediction.assessment.chwId !== user.userId) {
+        throw new ForbiddenException('You can only access predictions for your assigned children');
+      }
     }
 
     if (user.role === 'NURSE') {
       const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
-      if (!nurse || nurse.healthCenterId !== prediction.assessment.chw.healthCenterId) {
+      if (!nurse || nurse.healthCenterId !== prediction.assessment.child.healthCenterId) {
         throw new ForbiddenException('You can only access predictions from your health center');
       }
     }

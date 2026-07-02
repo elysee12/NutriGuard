@@ -71,8 +71,8 @@ model Child {
   cell            String
   village         String
   registeredAt    DateTime      @default(now())
-  chw             User          @relation("CHWChildren", fields: [chwId], references: [id])
-  chwId           Int
+  chw             User?         @relation("CHWChildren", fields: [chwId], references: [id])
+  chwId           Int?
   healthCenter    HealthCenter  @relation(fields: [healthCenterId], references: [id])
   healthCenterId  Int
   assessments     Assessment[]
@@ -93,8 +93,8 @@ model Assessment {
   id                      Int               @id @default(autoincrement())
   child                   Child             @relation(fields: [childId], references: [id])
   childId                 Int
-  chw                     User              @relation(fields: [chwId], references: [id])
-  chwId                   Int
+  chw                     User?             @relation(fields: [chwId], references: [id])
+  chwId                   Int?
   date                    DateTime          @default(now())
   height                  Float
   weight                  Float
@@ -120,10 +120,10 @@ model Prediction {
   id              Int           @id @default(autoincrement())
   assessment      Assessment    @relation(fields: [assessmentId], references: [id])
   assessmentId    Int           @unique
-  result          String
+  result          String        @db.Text
   riskScore       Float
   riskLevel       RiskLevel
-  recommendation  String
+  recommendation  String        @db.Text
   createdAt       DateTime      @default(now())
 }
 

@@ -1,5 +1,4 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { PageHeader } from "@/components/DashboardComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +21,8 @@ import {
   Utensils,
   Baby,
   HandHeart,
-  Home
+  Home,
+  ClipboardCheck
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
@@ -216,59 +216,79 @@ export default function CHWAssessments() {
   if (submitted && prediction) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-2xl">
-          <PageHeader title={t('assessment.result_title')} />
-          <div
-            className={`rounded-xl border-2 p-8 text-center ${
-              prediction.result === "Stunted" ? "border-destructive bg-destructive/5" : "border-primary bg-primary/5"
-            }`}
-          >
-            {prediction.result === "Stunted" ? (
-              <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-destructive" />
-            ) : (
-              <CheckCircle className="h-16 w-16 mx-auto mb-4 text-primary" />
-            )}
-            <h2 className="font-display text-2xl font-bold mb-2">
-              {prediction.result === "Stunted" ? t('assessment.stunted') : t('assessment.not_stunted')}
-            </h2>
-            <p className="text-muted-foreground mb-4">{t('assessment.risk_score')}: {prediction.risk}%</p>
-            <div className="w-full bg-muted rounded-full h-3 mb-6">
-              <div
-                className={`h-3 rounded-full transition-all ${
-                  prediction.risk > 60 ? "bg-destructive" : prediction.risk > 30 ? "bg-warning" : "bg-success"
-                }`}
-                style={{ width: `${prediction.risk}%` }}
-              />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-emerald-50/30">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+            {/* Hero Header */}
+            <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-2xl"></div>
+              </div>
+              
+              <div className="relative z-10 text-center">
+                <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                  {t('assessment.result_title', 'Assessment Result')}
+                </h1>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">{prediction.recommendation}</p>
-            <Button
-              className="mt-6"
-              onClick={() => {
-                setSubmitted(false);
-                setPrediction(null);
-                setForm({
-                  childId: selectedChild?.id ?? 0,
-                  childDob: selectedChild ? new Date(selectedChild.dob).toISOString().slice(0, 10) : "",
-                  gender: selectedChild?.gender || "M",
-                  height: "",
-                  weight: "",
-                  muac: "",
-                  umwana_afite_ababyeyi: "Yego",
-                  amashuri_mama_w_umwana_yiz: "Amashuri abanza",
-                  sick: "Oya",
-                  mmf: "Oya",
-                  fbf: "Oya",
-                  vup: "Oya",
-                  ese_haba_hari_amakimbirane: "Oya",
-                  icyo_umurera_akora: occupationOptions[0],
-                  water: "Oya",
-                  handwash: "Oya",
-                  toilet: "Oya",
-                });
-              }}
+
+            <div
+              className={`rounded-2xl border-2 p-8 text-center shadow-xl ${
+                prediction.result === "Stunted" ? "border-red-300 bg-red-50" : "border-emerald-300 bg-emerald-50"
+              }`}
             >
-              {t('assessment.new_assessment')}
-            </Button>
+              {prediction.result === "Stunted" ? (
+                <div className="inline-flex h-20 w-20 rounded-full bg-gradient-to-br from-red-100 to-red-200 items-center justify-center mb-4 shadow-lg">
+                  <AlertTriangle className="h-10 w-10 text-red-600" />
+                </div>
+              ) : (
+                <div className="inline-flex h-20 w-20 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 items-center justify-center mb-4 shadow-lg">
+                  <CheckCircle className="h-10 w-10 text-emerald-600" />
+                </div>
+              )}
+              <h2 className="text-3xl font-bold mb-2 text-slate-900">
+                {prediction.result === "Stunted" ? t('assessment.stunted') : t('assessment.not_stunted')}
+              </h2>
+              <p className="text-slate-600 font-semibold mb-4">{t('assessment.risk_score')}: {prediction.risk}%</p>
+              <div className="w-full bg-slate-200 rounded-full h-4 mb-6 shadow-inner">
+                <div
+                  className={`h-4 rounded-full transition-all shadow-md ${
+                    prediction.risk > 60 ? "bg-gradient-to-r from-red-500 to-red-600" : prediction.risk > 30 ? "bg-gradient-to-r from-amber-500 to-amber-600" : "bg-gradient-to-r from-emerald-500 to-emerald-600"
+                  }`}
+                  style={{ width: `${prediction.risk}%` }}
+                />
+              </div>
+              <p className="text-sm text-slate-700 max-w-md mx-auto mb-6">{prediction.recommendation}</p>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 h-12 px-8 rounded-xl font-bold shadow-lg"
+                onClick={() => {
+                  setSubmitted(false);
+                  setPrediction(null);
+                  setForm({
+                    childId: selectedChild?.id ?? 0,
+                    childDob: selectedChild ? new Date(selectedChild.dob).toISOString().slice(0, 10) : "",
+                    gender: selectedChild?.gender || "M",
+                    height: "",
+                    weight: "",
+                    muac: "",
+                    umwana_afite_ababyeyi: "Yego",
+                    amashuri_mama_w_umwana_yiz: "Amashuri abanza",
+                    sick: "Oya",
+                    mmf: "Oya",
+                    fbf: "Oya",
+                    vup: "Oya",
+                    ese_haba_hari_amakimbirane: "Oya",
+                    icyo_umurera_akora: occupationOptions[0],
+                    water: "Oya",
+                    handwash: "Oya",
+                    toilet: "Oya",
+                  });
+                }}
+              >
+                {t('assessment.new_assessment')}
+              </Button>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -278,9 +298,16 @@ export default function CHWAssessments() {
   if (loadingChildren) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-3xl">
-          <PageHeader title={t('assessment.title')} description="Loading registered children..." />
-          <div className="bg-card rounded-xl border shadow-sm p-6 text-center text-muted-foreground">{t('common.loading')}</div>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-emerald-50/30">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 text-center">
+              <div className="inline-flex h-16 w-16 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 items-center justify-center mb-4 animate-pulse">
+                <ClipboardCheck className="h-8 w-8 text-teal-600" />
+              </div>
+              <p className="text-slate-600 font-semibold">{t('common.loading')}</p>
+              <p className="text-slate-500 text-sm mt-1">Loading registered children...</p>
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -288,12 +315,30 @@ export default function CHWAssessments() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-4xl">
-        <PageHeader
-          title={t('assessment.title')}
-          description="Select a registered child and submit assessment details for ML prediction"
-        />
-        <form onSubmit={handleSubmit} className="bg-card rounded-xl border border-emerald-100 shadow-lg p-8 space-y-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-emerald-50/30">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+          {/* Hero Header */}
+          <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-2xl"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <ClipboardCheck className="h-5 w-5 text-white/80" />
+                <span className="text-white/90 text-sm font-semibold tracking-wider">SUBMIT ASSESSMENT</span>
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-2">
+                {t('assessment.title', 'New Assessment')}
+              </h1>
+              <p className="text-white/90 text-lg">
+                Select a registered child and submit assessment details for ML prediction
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-8">
           {/* Child Selection */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
@@ -634,6 +679,7 @@ export default function CHWAssessments() {
           </div>
         </form>
       </div>
+    </div>
     </DashboardLayout>
   );
 }

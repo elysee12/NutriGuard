@@ -8,8 +8,20 @@ export class ChildService {
   constructor(private prisma: PrismaService) {}
 
   async create(createChildDto: CreateChildDto, userId: number, userRole: string) {
-    let chwId: number;
+    let chwId: number | null = null;
     let healthCenterId: number;
+
+    // Validate DOB
+    const dobDate = new Date(createChildDto.dob);
+    const today = new Date();
+    const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+    
+    if (dobDate < fiveYearsAgo) {
+      throw new ForbiddenException('Child must be under 5 years old');
+    }
+    if (dobDate > today) {
+      throw new ForbiddenException('Date of birth cannot be in the future');
+    }
 
     // If user is CHW, use their own ID
     if (userRole === 'CHW') {
@@ -23,27 +35,35 @@ export class ChildService {
       }
       healthCenterId = chw.healthCenterId;
     } 
-    // If user is NURSE or ADMIN, use the provided chwId from form
+    // If user is NURSE or ADMIN
     else if (userRole === 'NURSE' || userRole === 'ADMIN') {
-      if (!createChildDto.chwId) {
-        throw new ForbiddenException('CHW assignment is required when registered by Nurse or Admin');
-      }
-
-      const chw = await this.prisma.user.findUnique({
-        where: { id: createChildDto.chwId },
+      // Get the user (Nurse/Admin) to get their health center
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
         include: { healthCenter: true },
       });
-
-      if (!chw || chw.role !== 'CHW') {
-        throw new ForbiddenException('Invalid CHW selected');
+      if (!user || !user.healthCenterId) {
+        throw new ForbiddenException('User is not assigned to a health center');
       }
+      healthCenterId = user.healthCenterId;
 
-      if (!chw.healthCenterId) {
-        throw new ForbiddenException('CHW is not assigned to a health center');
+      // If chwId is provided, validate it
+      if (createChildDto.chwId) {
+        const chw = await this.prisma.user.findUnique({
+          where: { id: createChildDto.chwId },
+          include: { healthCenter: true },
+        });
+
+        if (!chw || chw.role !== 'CHW') {
+          throw new ForbiddenException('Invalid CHW selected');
+        }
+
+        if (!chw.healthCenterId) {
+          throw new ForbiddenException('CHW is not assigned to a health center');
+        }
+
+        chwId = createChildDto.chwId;
       }
-
-      chwId = createChildDto.chwId;
-      healthCenterId = chw.healthCenterId;
     } else {
       throw new ForbiddenException('Unauthorized to register child');
     }
@@ -105,12 +125,25 @@ export class ChildService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user: any) {
     const child = await this.prisma.child.findUnique({
       where: { id },
       include: { assessments: { include: { prediction: true } }, chw: true, healthCenter: true },
     });
     if (!child) throw new NotFoundException('Child not found');
+    
+    // Authorization check
+    if (user.role === 'CHW') {
+      if (child.chwId !== user.userId) {
+        throw new ForbiddenException('You can only access your assigned children');
+      }
+    } else if (user.role === 'NURSE') {
+      const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
+      if (!nurse || nurse.healthCenterId !== child.healthCenterId) {
+        throw new ForbiddenException('You can only access children in your health center');
+      }
+    }
+    
     return child;
   }
 
@@ -130,6 +163,20 @@ export class ChildService {
       const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
       if (!nurse || nurse.healthCenterId !== child.healthCenterId) {
         throw new ForbiddenException('You can only update children in your health center');
+      }
+    }
+
+    // Validate DOB if it's being updated
+    if (updateChildDto.dob) {
+      const dobDate = new Date(updateChildDto.dob);
+      const today = new Date();
+      const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+      
+      if (dobDate < fiveYearsAgo) {
+        throw new ForbiddenException('Child must be under 5 years old');
+      }
+      if (dobDate > today) {
+        throw new ForbiddenException('Date of birth cannot be in the future');
       }
     }
 

@@ -25,8 +25,8 @@ export class ChildController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.childService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    return this.childService.findOne(id, req.user);
   }
 
   @Patch(':id')

@@ -13,11 +13,19 @@ export class AssessmentService {
 
   async create(createAssessmentDto: CreateAssessmentDto, user: any) {
     const { childId, ...data } = createAssessmentDto;
-    const chwId = user.userId;
-
+    
     const child = await this.prisma.child.findUnique({ where: { id: childId } });
     if (!child) {
       throw new NotFoundException('Child not found');
+    }
+    
+    const isNurse = user.role === 'NURSE';
+    // For CHW: use their own userId. For Nurse: use the child's assigned chwId if available
+    let chwId: number | null = null;
+    if (isNurse) {
+      chwId = child.chwId; // child's assigned CHW
+    } else {
+      chwId = user.userId; // current CHW
     }
 
     const mlFeatures = {
@@ -116,16 +124,20 @@ export class AssessmentService {
       }
       return this.prisma.assessment.findMany({
         where: {
-          chw: {
+          child: {
             healthCenterId: nurse.healthCenterId,
           },
         },
         include: includeOptions,
       });
     } else {
-      // CHW role
+      // CHW role: all assessments for children assigned to this CHW
       return this.prisma.assessment.findMany({
-        where: { chwId: user.userId },
+        where: {
+          child: {
+            chwId: user.userId,
+          },
+        },
         include: includeOptions,
       });
     }
@@ -145,13 +157,20 @@ export class AssessmentService {
     if (!assessment) throw new NotFoundException('Assessment not found');
 
     // Authorization check
-    if (user.role === 'CHW' && assessment.chwId !== user.userId) {
-      throw new ForbiddenException('You can only access your own assessments');
+    if (user.role === 'CHW') {
+      // CHW can access if they are assigned to the child OR if they created the assessment
+      if (assessment.child.chwId !== user.userId && assessment.chwId !== user.userId) {
+        throw new ForbiddenException('You can only access assessments for your assigned children');
+      }
     }
 
     if (user.role === 'NURSE') {
       const nurse = await this.prisma.user.findUnique({ where: { id: user.userId } });
-      if (!nurse || nurse.healthCenterId !== assessment.chw.healthCenterId) {
+      if (!nurse) {
+        throw new ForbiddenException('Nurse not found');
+      }
+      // Check if nurse's health center matches child's health center
+      if (nurse.healthCenterId !== assessment.child.healthCenterId) {
         throw new ForbiddenException('You can only access assessments from your health center');
       }
     }
@@ -162,7 +181,7 @@ export class AssessmentService {
   async reviewAssessment(id: number, status: string, reviewerId: number) {
     const assessment = await this.prisma.assessment.findUnique({ 
       where: { id },
-      include: { chw: true }
+      include: { child: { include: { healthCenter: true } } }
     });
     if (!assessment) throw new NotFoundException('Assessment not found');
 
@@ -175,7 +194,7 @@ export class AssessmentService {
       throw new ForbiddenException('Only nurses can review assessments.');
     }
 
-    if (reviewer.healthCenterId !== assessment.chw.healthCenterId) {
+    if (!reviewer.healthCenterId || reviewer.healthCenterId !== assessment.child.healthCenterId) {
       throw new ForbiddenException('You can only review assessments from your health center');
     }
 

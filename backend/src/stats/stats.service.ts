@@ -82,18 +82,18 @@ export class StatsService {
   }
 
   async getCHWStats(userId: number) {
-    const [totalChildren, totalAssessments] = await Promise.all([
-      this.prisma.child.count({ where: { chwId: userId } }),
-      this.prisma.assessment.count({ where: { chwId: userId } }),
-    ]);
-
-    // Get all children for this CHW and count high risk cases based on latest assessment
+    // Get children assigned to this CHW
     const children = await this.prisma.child.findMany({
       where: { chwId: userId },
       select: { id: true },
     });
 
+    const totalChildren = children.length;
+
+    // Count only the latest assessment per child to avoid duplicates
+    let totalAssessments = 0;
     let highRiskCount = 0;
+    
     for (const child of children) {
       const latestAssessment = await this.prisma.assessment.findFirst({
         where: { childId: child.id },
@@ -101,14 +101,18 @@ export class StatsService {
         orderBy: { date: 'desc' },
       });
       
-      if (latestAssessment?.prediction?.riskLevel === RiskLevel.high) {
-        highRiskCount++;
+      if (latestAssessment) {
+        totalAssessments++; // Count only one assessment per child (the latest)
+        
+        if (latestAssessment.prediction?.riskLevel === RiskLevel.high) {
+          highRiskCount++;
+        }
       }
     }
 
     return {
       totalChildren,
-      totalAssessments,
+      totalAssessments, // Now counting only latest assessment per child
       highRiskCount,
       followUpRate: '92%', // Mocked for now
     };

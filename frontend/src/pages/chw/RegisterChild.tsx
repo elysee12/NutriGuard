@@ -253,6 +253,20 @@ export default function RegisterChild() {
       return;
     }
 
+    // Validate DOB is not older than 5 years
+    const dobDate = new Date(form.dob);
+    const today = new Date();
+    const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+    if (dobDate < fiveYearsAgo) {
+      toast.error(t('assessment.dob_too_old', 'Child must be under 5 years old'));
+      return;
+    }
+    // Validate DOB is not in the future
+    if (dobDate > today) {
+      toast.error(t('assessment.dob_future', 'Date of birth cannot be in the future'));
+      return;
+    }
+
     if (!form.motherName.trim()) {
       toast.error(t('assessment.mother_name_required', "Mother/Guardian name is required"));
       return;
@@ -328,32 +342,56 @@ export default function RegisterChild() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <PageHeader 
-            title={t('nav.register_child')} 
-            description={t('assessment.add_child_desc', "Add a new child under 5 to the system")} 
-          />
-          <Button 
-            onClick={() => setIsRegisterModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 h-11 px-6 rounded-lg shadow-sm"
-          >
-            <Plus className="h-5 w-5" />
-            <span>{t('assessment.new_child', 'New Child')}</span>
-          </Button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-emerald-50/30">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+          {/* Hero Header */}
+          <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-600 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-2xl"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <User className="h-5 w-5 text-white/80" />
+                <span className="text-white/90 text-sm font-semibold tracking-wider">COMMUNITY HEALTH</span>
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-2">
+                {t('nav.register_child')}
+              </h1>
+              <p className="text-white/90 text-lg mb-6">
+                {t('assessment.add_child_desc', "Add a new child under 5 to the system")}
+              </p>
+              
+              <Button 
+                onClick={() => setIsRegisterModalOpen(true)}
+                size="lg"
+                className="bg-white text-teal-600 hover:bg-white/90 shadow-xl font-bold h-12 px-6 rounded-xl"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                {t('assessment.new_child', 'New Child')}
+              </Button>
+            </div>
+          </div>
 
-        <div className="bg-card rounded-xl border border-emerald-100 shadow-lg overflow-hidden">
-          <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-emerald-50 to-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h3 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
-              <Users2 className="h-5 w-5" />
-              {t('assessment.registered_children')}
-            </h3>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600" />
+
+        {/* Registered Children */}
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 border-b border-teal-100 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 flex items-center justify-center shadow-lg">
+                <Users2 className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900">{t('assessment.registered_children')}</h3>
+                <p className="text-sm text-slate-600 mt-0.5">Children registered in your community</p>
+              </div>
+            </div>
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <Input 
                 placeholder={t('common.search', 'Search by name...')} 
-                className="pl-10 h-11 border-emerald-200 focus-visible:ring-emerald-500"
+                className="pl-10 h-11 border-slate-300 focus-visible:ring-teal-500"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -364,12 +402,19 @@ export default function RegisterChild() {
           </div>
           
           {loadingChildren ? (
-            <div className="p-8 text-center">
-              <p className="text-muted-foreground animate-pulse">{t('common.loading')}</p>
+            <div className="p-12 text-center">
+              <div className="inline-flex h-16 w-16 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 items-center justify-center mb-4 animate-pulse">
+                <Users2 className="h-8 w-8 text-teal-600" />
+              </div>
+              <p className="text-slate-600 font-semibold animate-pulse">{t('common.loading')}</p>
             </div>
           ) : filteredChildren.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-muted-foreground">{searchTerm ? t('assessment.no_matches', 'No matching records found') : t('assessment.no_children')}</p>
+            <div className="p-12 text-center">
+              <div className="inline-flex h-20 w-20 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 items-center justify-center mb-4">
+                <Users2 className="h-10 w-10 text-teal-600" />
+              </div>
+              <p className="text-slate-600 font-semibold text-lg">{searchTerm ? t('assessment.no_matches', 'No matching records found') : t('assessment.no_children')}</p>
+              <p className="text-slate-500 text-sm mt-1">Start by registering children in your community</p>
             </div>
           ) : (
             <>
@@ -428,20 +473,31 @@ export default function RegisterChild() {
               {/* Desktop View: Table */}
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-white">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
                       {[
                         'ID', t('common.child'), t('assessment.mother_name'), t('common.dob'), t('location.sector'), t('location.cell'), t('location.village'), t('common.registered'), t('common.actions')
                       ].map((header) => (
-                        <th key={header} className="p-4 text-sm font-bold text-emerald-900 uppercase tracking-tight">{header}</th>
+                        <th key={header} className="p-4 text-xs font-bold text-slate-700 uppercase tracking-wider">{header}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody>
-                    {currentEntries.map((child, index) => (
-                      <tr key={child.id} className={`border-b last:border-0 transition-all hover:bg-emerald-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                        <td className="p-4 text-sm font-bold text-emerald-700">{formatChildId(child.id)}</td>
-                        <td className="p-4 text-sm font-semibold text-slate-900">{child.name}</td>
+                  <tbody className="divide-y divide-slate-100">
+                    {currentEntries.map((child) => (
+                      <tr key={child.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-4">
+                          <span className="inline-flex items-center justify-center px-2.5 py-1 bg-gradient-to-br from-teal-100 to-emerald-100 text-teal-700 rounded-lg text-xs font-bold">
+                            {formatChildId(child.id)}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-100 to-emerald-100 flex items-center justify-center">
+                              <span className="text-teal-700 font-bold text-sm">{child.name[0]}</span>
+                            </div>
+                            <span className="text-sm font-bold text-slate-900">{child.name}</span>
+                          </div>
+                        </td>
                         <td className="p-4 text-sm text-slate-600">{child.motherName}</td>
                         <td className="p-4 text-sm text-slate-600">{new Date(child.dob).toLocaleDateString()}</td>
                         <td className="p-4 text-sm text-slate-600">{child.sector}</td>
@@ -453,7 +509,7 @@ export default function RegisterChild() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-9 w-9 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all"
+                              className="h-9 w-9 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all rounded-lg"
                               onClick={() => handleEdit(child)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -461,7 +517,7 @@ export default function RegisterChild() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 transition-all"
+                              className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 transition-all rounded-lg"
                               onClick={() => confirmDelete(child.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -476,9 +532,9 @@ export default function RegisterChild() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="p-4 border-t bg-gradient-to-r from-emerald-50 to-white flex items-center justify-between">
+                <div className="p-4 border-t bg-gradient-to-r from-teal-50 to-emerald-50/50 flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-600">
-                    Showing <span className="font-bold text-emerald-700">{(currentPage - 1) * entriesPerPage + 1}</span> to <span className="font-bold text-emerald-700">{Math.min(currentPage * entriesPerPage, filteredChildren.length)}</span> of <span className="font-bold text-emerald-700">{filteredChildren.length}</span> entries
+                    Showing <span className="font-bold text-teal-600">{(currentPage - 1) * entriesPerPage + 1}</span> to <span className="font-bold text-teal-600">{Math.min(currentPage * entriesPerPage, filteredChildren.length)}</span> of <span className="font-bold text-teal-600">{filteredChildren.length}</span> entries
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -486,7 +542,7 @@ export default function RegisterChild() {
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="flex items-center gap-1 h-9 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300"
+                      className="flex items-center gap-1 h-9 border-slate-300 hover:bg-teal-50 hover:border-teal-500"
                     >
                       <ChevronLeft className="h-4 w-4" />
                       {t('common.previous', 'Previous')}
@@ -497,7 +553,7 @@ export default function RegisterChild() {
                           key={page}
                           variant={currentPage === page ? "default" : "outline"}
                           size="sm"
-                          className={`w-9 h-9 p-0 ${currentPage === page ? 'shadow-md' : 'border-emerald-200 hover:bg-emerald-50'}`}
+                          className={`w-9 h-9 p-0 ${currentPage === page ? 'bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg' : 'border-slate-300 hover:bg-teal-50'}`}
                           onClick={() => setCurrentPage(page)}
                         >
                           {page}
@@ -509,7 +565,7 @@ export default function RegisterChild() {
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="flex items-center gap-1 h-9 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300"
+                      className="flex items-center gap-1 h-9 border-slate-300 hover:bg-teal-50 hover:border-teal-500"
                     >
                       {t('common.next', 'Next')}
                       <ChevronRight className="h-4 w-4" />
@@ -521,6 +577,7 @@ export default function RegisterChild() {
           )}
         </div>
       </div>
+    </div>
 
       {/* Register Child Modal */}
       <Dialog open={isRegisterModalOpen} onOpenChange={setIsRegisterModalOpen}>
