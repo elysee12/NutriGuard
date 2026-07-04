@@ -54,9 +54,11 @@ export class UserService {
       data: { status },
     });
 
-    // Send notification email
+    // Send notification email asynchronously (non-blocking)
     if (status === UserStatus.APPROVED || status === UserStatus.REJECTED) {
-      await this.mailService.sendAccountStatusEmail(user.email, user.name, status as 'APPROVED' | 'REJECTED');
+      this.mailService.sendAccountStatusEmail(user.email, user.name, status as 'APPROVED' | 'REJECTED').catch(err => {
+        console.error('Failed to send account status email:', err);
+      });
     }
 
     return updatedUser;
@@ -137,8 +139,13 @@ export class UserService {
     return this.prisma.$transaction(async (tx) => {
       // Handle relations before deleting user
       
-      // 1. Delete system logs
-      await tx.systemLog.deleteMany({ where: { userId: id } });
+      // 1. Delete system logs (if table exists)
+      try {
+        await tx.systemLog.deleteMany({ where: { userId: id } });
+      } catch (error) {
+        // SystemLog table might not exist, skip it
+        console.log('SystemLog table not found, skipping...');
+      }
 
       // 2. Handle assessments and their predictions
       // Delete predictions related to assessments of this CHW

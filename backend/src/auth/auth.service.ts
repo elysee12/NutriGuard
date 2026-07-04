@@ -55,8 +55,10 @@ export class AuthService {
         },
       });
 
-      // Send confirmation email
-      await this.mailService.sendRegistrationRequestEmail(email, name);
+      // Send confirmation email asynchronously (non-blocking)
+      this.mailService.sendRegistrationRequestEmail(email, name).catch(err => {
+        this.logger.error('Failed to send registration email:', err);
+      });
 
       return {
         message: 'Registration request submitted. An administrator will review your account.',
@@ -118,6 +120,12 @@ export class AuthService {
       this.logger.error('Login error:', error.stack);
       throw error;
     }
+  }
+
+  async logout(userId: number) {
+    // Invalidate session if needed (for future session tracking)
+    this.logger.log(`User ${userId} logged out`);
+    return { message: 'Logged out successfully' };
   }
 
   async validateUser(payload: any) {

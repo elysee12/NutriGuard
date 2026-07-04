@@ -1,9 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // 0. Enable cookie parser for session management
+  app.use(cookieParser());
   
   // 1. Configure Validation (Kugira ngo amakuru yinjira abe meza)
   app.useGlobalPipes(new ValidationPipe({
@@ -21,7 +25,7 @@ async function bootstrap() {
       'http://localhost:8081', // New local development port
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    credentials: true, // Important for cookies
   });
 
   // 3. Tegeka app kwakira requests kuri 0.0.0.0 (Ingenzi kuri Render/Linux)
